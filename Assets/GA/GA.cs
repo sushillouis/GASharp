@@ -43,9 +43,7 @@ public class GA {
     public void Evolve()
     {
         for(int i = 1; i < gaParameters.numberOfGenerations; i++) {
-            //Thread.Sleep(1);
-            //InputHandler.inst.ThreadLog("Generation: " + i); 
-            parents.CHCGeneration(children);
+            parents.Generation(children);
             children.Statistics();
             children.Report(i);
 
@@ -55,6 +53,7 @@ public class GA {
             children = tmp;
 
         }
+        parents.Print();
     }
     
     public void Cleanup()

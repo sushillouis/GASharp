@@ -13,18 +13,19 @@ public class Individual : IComparable<Individual>
     public Individual(int chromLength)
     {
         chromosome = new int[chromLength];
+        this.chromLength = chromLength;
     }
 
     public void Init()
     {
-        for(int i = 0; i < chromosome.Length; i++) {
+        for(int i = 0; i < chromLength; i++) {
             chromosome[i] = Rand.inst.Flip01(0.5f);
         }
     }
 
     public void Mutate(float pm)
     {
-        for(int i = 0; i < chromosome.Length; i++) {
+        for(int i = 0; i < chromLength; i++) {
             chromosome[i] = (Rand.inst.Flip(pm) ? 1 - chromosome[i] : chromosome[i]);
         }
     }
@@ -32,7 +33,7 @@ public class Individual : IComparable<Individual>
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < chromosome.Length; i++) {
+        for(int i = 0; i < chromLength; i++) {
             sb.Append(chromosome[i].ToString("0"));
         }
         sb.Append(", " + fitness);

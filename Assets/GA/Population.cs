@@ -14,6 +14,7 @@ public class Population
     {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
+        evaluator = new AXnEvaluator(0, 1023, 1, 2, 10);
     }
 
     public void Init()
@@ -86,9 +87,9 @@ public class Population
 
     public void Report(int gen)
     {
-        string report = gen + ": " + min + ", " + avg + ", " + max;
-
         GraphMgr.inst.AddPoint(gen, avg, max);
+
+        string report = gen + ": " + min + ", " + avg + ", " + max;
         InputHandler.inst.ThreadLog(report);
 
         using(StreamWriter w = File.AppendText("outfile")) {
@@ -132,10 +133,14 @@ public class Population
     {
         Evaluate(0, parameters.populationSize);
     }
+
+    private AXnEvaluator evaluator;// Constructed in Population constructor
+
     public void Evaluate(int start, int end)
     {
         for(int i = start; i < end; i++) {
-            members[i].fitness = Evaluator.Evaluate(members[i]);
+            //members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
+            members[i].fitness = evaluator.Evaluate(members[i]);   // A * X^N
         }
     }
 
