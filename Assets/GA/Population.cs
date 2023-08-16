@@ -60,7 +60,7 @@ public class Population
 
     public void Halve(Population child)
     {
-        Array.Sort(members);
+        Array.Sort(members); //Individual defines sorting from high fitness to low
         for(int i = 0; i < parameters.populationSize; i++) {
             child.members[i] = members[i];
         }
@@ -82,7 +82,7 @@ public class Population
             Reproduce(parent1, parent2, child1, child2);
         }
         Evaluate(parameters.populationSize, members.Length);
-        Halve(child);
+        Halve(child); // sort and choose best half to make child population
     }
 
     public void Report(int gen)
@@ -139,8 +139,8 @@ public class Population
     public void Evaluate(int start, int end)
     {
         for(int i = start; i < end; i++) {
-            //members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
-            members[i].fitness = evaluator.Evaluate(members[i]);   // A * X^N
+            members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
+            //members[i].fitness = evaluator.Evaluate(members[i]);   // A * X^N
         }
     }
 
