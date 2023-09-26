@@ -42,6 +42,28 @@ public class AXnEvaluator
     public float Evaluate(Individual individual)
     {
         float val = Decode(0, individual.chromLength, min, precision, individual);
-        return A * Mathf.Pow(val, N);
+        float obj = A * Mathf.Pow(val, N);
+        return obj;
+    }
+
+    public float F2(Individual individual)
+    {
+        float x1 = Decode(0, 12, -2.048f, precision, individual);
+        float x2 = Decode(12, 24, -2.048f, precision, individual);
+        //InputHandler.inst.ThreadLog("xs: " + x1+ ", " + x2);
+        return 1.0f/(1f + ((100f * Mathf.Pow((Mathf.Pow(x1, 2) - x2), 2f)) + Mathf.Pow((1 - x1), 2)));
+    }
+
+    public float F3(Individual individual)
+    {
+        int sum = 0;
+        //float[] x = new float[5];
+        for(int i = 0; i < 5; i++) {
+            sum += (int) Decode(i * 10, i * 10 + 10, -5.12f, precision, individual);
+        }
+        sum += 30;
+        if(sum < 0)
+            InputHandler.inst.ThreadLog("Exception: " + sum);
+        return (30f/ (sum + 1f));
     }
 }

@@ -14,7 +14,7 @@ public class Population
     {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
-        evaluator = new AXnEvaluator(0, 1023, 1, 2, 10);
+        evaluator = new AXnEvaluator(-5.12f, 5.11f, 1, 2, 10);
     }
 
     public void Init()
@@ -139,8 +139,8 @@ public class Population
     public void Evaluate(int start, int end)
     {
         for(int i = start; i < end; i++) {
-            members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
-            //members[i].fitness = evaluator.Evaluate(members[i]);   // A * X^N
+            //members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
+            members[i].fitness = evaluator.F3(members[i]);   // A * X^N
         }
     }
 
