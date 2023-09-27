@@ -56,14 +56,14 @@ public class AXnEvaluator
 
     public float F3(Individual individual)
     {
-        int sum = 0;
+        int sum = 30;
         //float[] x = new float[5];
         for(int i = 0; i < 5; i++) {
             sum += (int) Decode(i * 10, i * 10 + 10, -5.12f, precision, individual);
         }
-        sum += 30;
         if(sum < 0)
             InputHandler.inst.ThreadLog("Exception: " + sum);
-        return (30f/ (sum + 1f));
+
+        return (1f/ (sum + 1f));
     }
 }

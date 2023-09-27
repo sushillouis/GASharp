@@ -14,7 +14,7 @@ public class Population
     {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
-        evaluator = new AXnEvaluator(-5.12f, 5.11f, 1, 2, 10);
+        evaluator = new AXnEvaluator(0, 5.11f, 1, 2, 10);
     }
 
     public void Init()
