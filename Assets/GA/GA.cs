@@ -43,7 +43,7 @@ public class GA {
     public void Evolve()
     {
         for(int i = 1; i < gaParameters.numberOfGenerations; i++) {
-            parents.CHCGeneration(children);
+            parents.Generation(children);
             children.Statistics();
             children.Report(i);
 
@@ -53,7 +53,7 @@ public class GA {
             children = tmp;
 
         }
-        parents.Print();
+        //parents.Print();
     }
     
     public void Cleanup()
