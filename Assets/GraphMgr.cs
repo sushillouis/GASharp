@@ -1,5 +1,7 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,12 +16,13 @@ public class GraphMgr : MonoBehaviour
     void Start()
     {
         avgPoints = new List<Vector3>();
+        maxPoints = new List<Vector3>();
         xAxisLimit = xAxis.GetPosition(1).x;
         yDiffAxis = yAxis.GetPosition(1).y - yAxis.GetPosition(0).y;
-        AvgPlotRenderer.startWidth = width;
-        AvgPlotRenderer.endWidth = width;
-        MaxFitness.startWidth = width;
-        MaxFitness.endWidth = width;
+        AvgFitnessRenderer.startWidth = width;
+        AvgFitnessRenderer.endWidth = width;
+        MaxFitnessRenderer.startWidth = width;
+        MaxFitnessRenderer.endWidth = width;
     }
 
     float width = 0.2f;
@@ -40,15 +43,17 @@ public class GraphMgr : MonoBehaviour
     public float yLimitMax = 0;
     public float yInc = 1f;
 
-    public LineRenderer AvgPlotRenderer;
+    public LineRenderer AvgFitnessRenderer;
     public LineRenderer xAxis;
     public LineRenderer yAxis;
-    public LineRenderer MaxFitness;
+    public LineRenderer MaxFitnessRenderer;
 
     public Text MinYLabel;
     public Text MaxYLabel;
     public Text MinXLabel;
     public Text MaxXLabel;
+    public Text chromosomeText;
+    public string chromosomeString = "";
 
     public void SetAxisLimits(float limitX, float limitYMin, float limitYMax)
     {
@@ -77,7 +82,14 @@ public class GraphMgr : MonoBehaviour
             if(max > yLimitMax) yLimitMax = max;
         }
     }
-   
+
+    public void SetBestChromosome(Individual individual) {
+        chromosomeString = individual.ToString();
+    }
+
+    public void PlotBestChrom() {
+        chromosomeText.text = chromosomeString;
+    }
 
     public void PlotGraph()
     {
@@ -89,17 +101,17 @@ public class GraphMgr : MonoBehaviour
         int count = 0;
 
         lock(avgPoints) {
-            AvgPlotRenderer.positionCount = avgPoints.Count;
+            AvgFitnessRenderer.positionCount = avgPoints.Count;
             foreach(Vector3 point in avgPoints) {
-                AvgPlotRenderer.SetPosition(count++, Recompute(point));
+                AvgFitnessRenderer.SetPosition(count++, Recompute(point));
             }
         }
 
         count = 0;
         lock(maxPoints) {
-            MaxFitness.positionCount = maxPoints.Count;
+            MaxFitnessRenderer.positionCount = maxPoints.Count;
             foreach(Vector3 point in maxPoints) {
-                MaxFitness.SetPosition(count++, Recompute(point));
+                MaxFitnessRenderer.SetPosition(count++, Recompute(point));
             }
         }
     }

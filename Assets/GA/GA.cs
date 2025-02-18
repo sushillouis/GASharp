@@ -3,17 +3,22 @@ using System.Diagnostics;
 using System.Threading;
 using Unity.Collections;
 
+[Serializable]
 public class GA {
-
-
     public GAParameters gaParameters;
+    public Population parents, children;
     public GA(GAParameters gap)
     {
         gaParameters = gap;
-        Rand r = new Rand(gaParameters.seed);
+        GARandom r = new GARandom(gaParameters.seed);
+    }
+    public void Run() {
+        Init();
+        Evolve();
+        Cleanup();
+
     }
 
-    public Population parents, children;
     public void Init()
     {
         InputHandler.inst.ThreadLog("Initializing GA");
@@ -31,19 +36,11 @@ public class GA {
 
     }
 
-
-    public void Run()
-    {
-        Init();
-        Evolve();
-        Cleanup();
-
-    }
-    
     public void Evolve()
     {
         for(int i = 1; i < gaParameters.numberOfGenerations; i++) {
             parents.Generation(children);
+            //parents.CHCGeneration(children);
             children.Statistics();
             children.Report(i);
 

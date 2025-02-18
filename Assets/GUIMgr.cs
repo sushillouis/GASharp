@@ -43,7 +43,7 @@ public class GUIMgr : MonoBehaviour
             _state = value;
 
             InputPanel.isVisible = (_state == GAState.GAInput);
-            //ConsolePanel.isVisible = (_state == GAState.GARunning);
+            GraphPanel.isVisible = (_state != GAState.GAInput);
             //GraphPanel.isVisible = (_state == GAState.GARunning || _state == GAState.GADone);
 
             }

@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Rand
+public class GARandom
 {
-    public static Rand inst;
+    public static GARandom inst;
 
     public System.Random rand;
-    public Rand(int seed)
+    public GARandom(int seed)
     {
         inst = this;
         rand = new System.Random(seed);

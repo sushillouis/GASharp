@@ -4,25 +4,32 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+public enum DeJong {
+    F1 = 0, F2, F3, F4, F5,
+}
+
+[Serializable]
 public class Population 
 {
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
+    public SimpleEvaluator evaluator;// Constructed in Population constructor
 
-    public Population(GAParameters p)
-    {
+    public Individual bestIndividual;
+
+    public Population(GAParameters p) {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
-        //evaluator = new AXnEvaluator(-5.12f, 5.11f, 1, 2, 10);
-        evaluator = new AXnEvaluator(-1.28f, 1.27f, 1, 2, 8);
+        evaluator = new SimpleEvaluator(parameters);
     }
 
     public void Init()
     {
         for(int i = 0; i < members.Length; i++) {
-            members[i] = new Individual(parameters.chromosomeLength);
+            members[i] = new Individual(parameters);
             members[i].Init();
+
         }
         Evaluate();
     }
@@ -52,7 +59,7 @@ public class Population
             child2.chromosome[i] = parent2.chromosome[i];
         }
 
-        if(Rand.inst.Flip(parameters.pCross))
+        if(GARandom.inst.Flip(parameters.pCross))
             XOver.OnePoint(parent1, parent2, child1, child2, parameters.chromosomeLength);
 
         child1.Mutate(parameters.pMut);
@@ -89,6 +96,7 @@ public class Population
     public void Report(int gen)
     {
         GraphMgr.inst.AddPoint(gen, avg, max);
+        GraphMgr.inst.SetBestChromosome(bestIndividual);
 
         string report = gen + ": " + min + ", " + avg + ", " + max;
         InputHandler.inst.ThreadLog(report);
@@ -96,8 +104,6 @@ public class Population
         using(StreamWriter w = File.AppendText("outfile")) {
             w.WriteLine(report);
         }
-
-
     }
 
     public void Statistics()
@@ -107,12 +113,16 @@ public class Population
     public void Statistics(int start, int end)
     {
         float fit;
+        bestIndividual = members[start];
         min = max = sumFitness = members[start].fitness;
         for(int i =  start + 1; i < end; i++) {
             fit = members[i].fitness;
             sumFitness += fit;
             if(fit < min) min = fit;
-            if(fit > max) max = fit;
+            if(fit > max) {
+                max = fit;
+                bestIndividual = members[i];
+            }
         }
         avg = sumFitness/(end - start);
 
@@ -122,7 +132,7 @@ public class Population
     {
         int index = -1;
         float sum = 0;
-        float limit = (float) Rand.inst.rand.NextDouble() * sumFitness;
+        float limit = (float) GARandom.inst.rand.NextDouble() * sumFitness;
         do {
             index = index + 1;
             sum += members[index].fitness;
@@ -135,14 +145,10 @@ public class Population
         Evaluate(0, parameters.populationSize);
     }
 
-    private AXnEvaluator evaluator;// Constructed in Population constructor
-
     public void Evaluate(int start, int end)
     {
         for(int i = start; i < end; i++) {
-            //members[i].fitness = Evaluator.Evaluate(members[i]); // MaxOnes
-            //members[i].fitness = evaluator.F3(members[i]);   // F3
-            members[i].fitness = evaluator.F4(members[i]);   // F4
+            members[i].fitness = evaluator.Evaluate(members[i]); 
         }
     }
 
