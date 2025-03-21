@@ -5,9 +5,9 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GraphMgr : MonoBehaviour
+public class GAPlotMgrOld : MonoBehaviour
 {
-    public static GraphMgr inst;
+    public static GAPlotMgrOld inst;
     private void Awake()
     {
         inst = this;
@@ -17,15 +17,15 @@ public class GraphMgr : MonoBehaviour
     {
         avgPoints = new List<Vector3>();
         maxPoints = new List<Vector3>();
-        xAxisLimit = xAxis.GetPosition(1).x;
-        yDiffAxis = yAxis.GetPosition(1).y - yAxis.GetPosition(0).y;
+        xAxisLimit = Axes.GetPosition(2).x;
+        yDiffAxis = Axes.GetPosition(1).z - Axes.GetPosition(0).z;
         AvgFitnessRenderer.startWidth = width;
         AvgFitnessRenderer.endWidth = width;
         MaxFitnessRenderer.startWidth = width;
         MaxFitnessRenderer.endWidth = width;
     }
 
-    float width = 0.2f;
+    float width = 1f;
 
     // Update is called once per frame
     void Update()
@@ -39,13 +39,12 @@ public class GraphMgr : MonoBehaviour
     public float xAxisLimit = 0;
     public float xLimit = 0;
     public float xInc = 1f;
-    public float yLimitMin = 0;
-    public float yLimitMax = 0;
-    public float yInc = 1f;
+    public float zLimitMin = 0;
+    public float zLimitMax = 0;
+    public float zInc = 1f;
 
     public LineRenderer AvgFitnessRenderer;
-    public LineRenderer xAxis;
-    public LineRenderer yAxis;
+    public LineRenderer Axes;
     public LineRenderer MaxFitnessRenderer;
 
     public Text MinYLabel;
@@ -59,32 +58,32 @@ public class GraphMgr : MonoBehaviour
     {
         xLimit = limitX;
         xInc = xAxisLimit / xLimit;
-        yLimitMin = limitYMin;
-        yLimitMax = limitYMax;
-        float yDiffFitness = yLimitMax - yLimitMin;
-        yInc = yDiffAxis / yDiffFitness;
+        zLimitMin = limitYMin;
+        zLimitMax = limitYMax;
+        float yDiffFitness = zLimitMax - zLimitMin;
+        zInc = yDiffAxis / yDiffFitness;
 
 
     }
-
+    public Vector3 offset = new Vector3(0, 1, 0);
     public List<Vector3> avgPoints;
     public List<Vector3> maxPoints;
     public void AddPoint(float gen, float avg, float max)
     {
         lock(avgPoints) {
-            avgPoints.Add(new Vector3(gen, avg, 0));
-            if(avg < yLimitMin) yLimitMin = avg;
-            if(avg > yLimitMax) yLimitMax = avg;
+            avgPoints.Add(new Vector3(gen, 0, avg));
+            if(avg < zLimitMin) zLimitMin = avg;
+            if(avg > zLimitMax) zLimitMax = avg;
 
         }
         lock(maxPoints) {
-            maxPoints.Add(new Vector3(gen, max, 0));
-            if(max > yLimitMax) yLimitMax = max;
+            maxPoints.Add(new Vector3(gen, 0, max));
+            if(max > zLimitMax) zLimitMax = max;
         }
     }
 
     public void SetBestChromosome(Individual individual) {
-        chromosomeString = individual.ToString();
+        //chromosomeString = individual.ToString();
     }
 
     public void PlotBestChrom() {
@@ -95,9 +94,9 @@ public class GraphMgr : MonoBehaviour
     {
 
         MaxXLabel.text = xLimit.ToString();
-        yInc = yDiffAxis / (yLimitMax - yLimitMin);
-        MinYLabel.text = yLimitMin.ToString();
-        MaxYLabel.text = yLimitMax.ToString();
+        zInc = yDiffAxis / (zLimitMax - zLimitMin);
+        MinYLabel.text = zLimitMin.ToString();
+        MaxYLabel.text = zLimitMax.ToString();
         int count = 0;
 
         lock(avgPoints) {
@@ -119,7 +118,9 @@ public class GraphMgr : MonoBehaviour
     public Vector3 Recompute(Vector3 point)
     {
         float x = point.x * xInc;
-        float y = (point.y - yLimitMin) * yInc;
-        return new Vector3 (x, y, 0);
+        float z = (point.z - zLimitMin) * zInc;
+        return new Vector3 (x, 0, z) + offset;
     }
+
+
 }

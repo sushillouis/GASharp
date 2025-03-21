@@ -30,7 +30,6 @@ public class GUIMgr : MonoBehaviour
     }
 
     public GAPanel InputPanel;
-    public GAPanel ConsolePanel;
     public GAPanel GraphPanel;
     public GAPanel PhenotypePanel;
 
@@ -43,8 +42,8 @@ public class GUIMgr : MonoBehaviour
             _state = value;
 
             InputPanel.isVisible = (_state == GAState.GAInput);
-            GraphPanel.isVisible = (_state != GAState.GAInput);
-            //GraphPanel.isVisible = (_state == GAState.GARunning || _state == GAState.GADone);
+            GraphPanel.isVisible = (_state == GAState.GARunning);
+
 
             }
     }

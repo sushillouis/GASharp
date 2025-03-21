@@ -14,18 +14,20 @@ public class Population
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
-    public SimpleEvaluator evaluator;// Constructed in Population constructor
+    public TSPEvaluator evaluator;// Constructed in Population constructor
 
     public Individual bestIndividual;
 
     public Population(GAParameters p) {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
-        evaluator = new SimpleEvaluator(parameters);
     }
 
-    public void Init()
+    public void Init(TSPEvaluator tspEvaluator)
     {
+        evaluator = tspEvaluator;
+        parameters.chromosomeLength = tspEvaluator.nCities;
+
         for(int i = 0; i < members.Length; i++) {
             members[i] = new Individual(parameters);
             members[i].Init();
@@ -60,7 +62,9 @@ public class Population
         }
 
         if(GARandom.inst.Flip(parameters.pCross))
-            XOver.OnePoint(parent1, parent2, child1, child2, parameters.chromosomeLength);
+            //XOver.Greedy(parent1, parent2, child1, child2, parameters.chromosomeLength, evaluator);
+            XOver.PMX(parent1, parent2, child1, child2, parameters.chromosomeLength);
+        //            XOver.OnePoint(parent1, parent2, child1, child2, parameters.chromosomeLength);
 
         child1.Mutate(parameters.pMut);
         child2.Mutate(parameters.pMut);
@@ -95,8 +99,9 @@ public class Population
 
     public void Report(int gen)
     {
-        GraphMgr.inst.AddPoint(gen, avg, max);
-        GraphMgr.inst.SetBestChromosome(bestIndividual);
+        GAPlotMgr.inst.AddStats(gen, avg, max);
+        GAPlotMgr.inst.SetBest(bestIndividual);
+        TSPPlotMgr.inst.SetBest(bestIndividual);
 
         string report = gen + ": " + min + ", " + avg + ", " + max;
         InputHandler.inst.ThreadLog(report);
@@ -148,8 +153,16 @@ public class Population
     public void Evaluate(int start, int end)
     {
         for(int i = start; i < end; i++) {
-            members[i].fitness = evaluator.Evaluate(members[i]); 
+            members[i].fitness = evaluator.Evaluate(members[i]);
         }
+    }
+
+    public void LocalOpt(int start, int end) {
+        for(int i = start; i < end; i++) {
+            if(GARandom.inst.Flip(parameters.pMut))
+                evaluator.LK2(members[i]);
+        }
+
     }
 
     public void Print()
