@@ -29,7 +29,7 @@ public class TSPEvaluator
     public Vector3[] cities;
     public int nCities;
     public float[,] distances;
-
+    public int maxLKIterations = 100;
     public void Init() {
         cities = new Vector3[gap.chromosomeLength];
         //GA gets initialized and calls this only after app files have been loaded.
@@ -39,6 +39,7 @@ public class TSPEvaluator
         Debug.Log("Initialized TSP");
         distances = new float[nCities, nCities];
         ComputeDistances();
+        maxLKIterations = (nCities -1) * (nCities - 1);
 
     }
 
@@ -107,7 +108,7 @@ public class TSPEvaluator
         int count = 0;
         float newObj, newFit;
 
-        while(hasImproved && count < 40) {
+        while(hasImproved && count < maxLKIterations) {
             hasImproved = false;
             maxGain = 0;
 

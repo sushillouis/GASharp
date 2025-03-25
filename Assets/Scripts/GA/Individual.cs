@@ -11,6 +11,18 @@ public enum TSPRepresentationType {
 }
 
 [Serializable]
+public class Route{
+    public int vid = -1;
+    public float demand = -1;
+    public List<int> tour;
+    public float tourLength = 0;
+
+    public Route() {
+        tour = new List<int>();
+    }
+}
+
+[Serializable]
 public class Individual : IComparable<Individual>
 {
     
@@ -18,7 +30,11 @@ public class Individual : IComparable<Individual>
     public int[] chromosome;
     public float fitness;
     public float objectiveFunction = -1;
-    public TSPEvaluator tspEvaluator;
+
+    public List<Route> routes = new List<Route>();
+    public List<int> unserved = new List<int>();
+    public float unservedDemand = 0;
+    public float sumRouteLengths = 0;
 
     public GAParameters parameters;
 
@@ -28,6 +44,7 @@ public class Individual : IComparable<Individual>
         this.parameters = parameters;
         chromLength = parameters.chromosomeLength;
         chromosome = new int[chromLength];
+
     }
 
     public void Init()
@@ -65,24 +82,6 @@ public class Individual : IComparable<Individual>
             }
         }
     }
-
-
-    public int FindClosestCity(int city, List<int> segment, HashSet<int> visited) {
-        float minDistance = int.MaxValue;
-        int minCity = -1;
-        float distance;
-        foreach(int other in segment) {
-            if(visited.Contains(other))
-                continue;
-            distance = tspEvaluator.GetDistance(city, other);
-            if(distance < minDistance) {
-                minDistance = distance;
-                minCity = other;
-            }
-        }
-        return minCity;
-    }
-
 
     public override string ToString()
     {

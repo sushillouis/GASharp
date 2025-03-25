@@ -14,7 +14,7 @@ public class Population
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
-    public TSPEvaluator evaluator;// Constructed in Population constructor
+    public CVRPEvaluator evaluator;// Constructed in Population constructor
 
     public Individual bestIndividual;
 
@@ -23,10 +23,9 @@ public class Population
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
     }
 
-    public void Init(TSPEvaluator tspEvaluator)
+    public void Init(CVRPEvaluator cvrpEvaluator)
     {
-        evaluator = tspEvaluator;
-        parameters.chromosomeLength = tspEvaluator.nCities;
+        evaluator = cvrpEvaluator;
 
         for(int i = 0; i < members.Length; i++) {
             members[i] = new Individual(parameters);
@@ -101,7 +100,7 @@ public class Population
     {
         GAPlotMgr.inst.AddStats(gen, avg, max);
         GAPlotMgr.inst.SetBest(bestIndividual);
-        TSPPlotMgr.inst.SetBest(bestIndividual);
+        CVRPPlotMgr.inst.SetBest(bestIndividual);
 
         string report = gen + ": " + min + ", " + avg + ", " + max;
         InputHandler.inst.ThreadLog(report);
@@ -160,9 +159,8 @@ public class Population
     public void LocalOpt(int start, int end) {
         for(int i = start; i < end; i++) {
             if(GARandom.inst.Flip(parameters.pMut))
-                evaluator.LK2(members[i]);
+                evaluator.LocalOpt(members[i]);
         }
-
     }
 
     public void Print()

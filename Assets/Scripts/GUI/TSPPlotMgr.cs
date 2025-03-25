@@ -34,8 +34,6 @@ public class TSPPlotMgr : MonoBehaviour
             LoadAndCountCititiesFromWeb(baseURL + filename); //sets cities and nCitites
         else
             LoadAndCountCitiesFromFile(filename); //sets cities and nCities
-
-
     }
 
     
@@ -132,7 +130,7 @@ public class TSPPlotMgr : MonoBehaviour
 public int LoadAndCountCities(string filename) {
         StreamReader streamReader = new StreamReader(filename);
         line = streamReader.ReadLine();
-        tspName = line.Substring(6);
+        problemFilename = line.Substring(6);
         SkipLines(streamReader, 2);
         line = streamReader.ReadLine();
         nCities = int.Parse(line.Substring(11));

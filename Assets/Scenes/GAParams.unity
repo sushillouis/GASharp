@@ -345,6 +345,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 92180942}
   m_CullTransparentMesh: 1
+--- !u!4 &153481478 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+  m_PrefabInstance: {fileID: 6754852293581793001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &162249111
 GameObject:
   m_ObjectHideFlags: 0
@@ -956,7 +961,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: TSP
+  m_text: CVRP
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -983,7 +988,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 44.75
+  m_fontSize: 33.55
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2018,7 +2023,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &617483325
 Transform:
   m_ObjectHideFlags: 0
@@ -2086,6 +2091,7 @@ Transform:
   m_Children:
   - {fileID: 1375764943}
   - {fileID: 617483325}
+  - {fileID: 1905626760}
   - {fileID: 994547262}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2125,10 +2131,10 @@ RectTransform:
   - {fileID: 1380394921}
   m_Father: {fileID: 2141172418}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 855, y: -50}
-  m_SizeDelta: {x: 280, y: 90}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 280, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &665279782
 MonoBehaviour:
@@ -3079,7 +3085,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: TSP
+  m_text: CVRP
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3693,9 +3699,9 @@ MonoBehaviour:
   m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMax: 24
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
@@ -6121,6 +6127,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aaab637421c1524c8daae877f0151ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cvrpEvaluator:
+    problemName: 
+    problemDescription: 
+    problemURL: https://www.cse.unr.edu/~sushil/class/gas/demos/CVRP
+    filelistFilename: CVRPList.html
+    problemFilename: 
+    problems: []
+    nCustomers: 0
+    nVehicles: 0
+    vehicleCapacity: 0
+    customers: []
+    depots: []
+    depotIds: 
+    depotDistances: []
+    maxLKIterations: 0
+    Penalty: 0
+    cMax: 100000
+    coordsSection: 0
+    demandSection: 0
+    depotSection: 0
+    totalCustomerDemand: 0
   PopulationSize: {fileID: 1010366306}
   NumberOfGenerations: {fileID: 700706256}
   nVarsIn: {fileID: 1659303847}
@@ -6143,7 +6170,27 @@ MonoBehaviour:
     pCross: 0
     pMut: 0
     seed: 0
-    tspName: 0
+    cvrpEvaluator:
+      problemName: 
+      problemDescription: 
+      problemURL: 
+      filelistFilename: CVRPList.html
+      problemFilename: 
+      problems: []
+      nCustomers: 0
+      nVehicles: 0
+      vehicleCapacity: 0
+      customers: []
+      depots: []
+      depotIds: 
+      depotDistances: []
+      maxLKIterations: 0
+      Penalty: 10000
+      cMax: 100000
+      coordsSection: 0
+      demandSection: 0
+      depotSection: 0
+      totalCustomerDemand: 0
     localOptInterval: 0
     isDebug: 0
     nBits: 0
@@ -6158,7 +6205,27 @@ MonoBehaviour:
       pCross: 0
       pMut: 0
       seed: 0
-      tspName: 0
+      cvrpEvaluator:
+        problemName: 
+        problemDescription: 
+        problemURL: 
+        filelistFilename: CVRPList.html
+        problemFilename: 
+        problems: []
+        nCustomers: 0
+        nVehicles: 0
+        vehicleCapacity: 0
+        customers: []
+        depots: []
+        depotIds: 
+        depotDistances: []
+        maxLKIterations: 0
+        Penalty: 10000
+        cMax: 100000
+        coordsSection: 0
+        demandSection: 0
+        depotSection: 0
+        totalCustomerDemand: 0
       localOptInterval: 0
       isDebug: 0
       nBits: 0
@@ -6172,16 +6239,35 @@ MonoBehaviour:
       avg: 0
       sumFitness: 0
       evaluator:
-        cities: []
-        nCities: 0
+        problemName: 
+        problemDescription: 
+        problemURL: 
+        filelistFilename: CVRPList.html
+        problemFilename: 
+        problems: []
+        nCustomers: 0
+        nVehicles: 0
+        vehicleCapacity: 0
+        customers: []
+        depots: []
+        depotIds: 
+        depotDistances: []
+        maxLKIterations: 0
+        Penalty: 10000
+        cMax: 100000
+        coordsSection: 0
+        demandSection: 0
+        depotSection: 0
+        totalCustomerDemand: 0
       bestIndividual:
         chromLength: 0
         chromosome: 
         fitness: 0
         objectiveFunction: 0
-        tspEvaluator:
-          cities: []
-          nCities: 0
+        routes: []
+        unserved: 
+        unservedDemand: 0
+        sumRouteLengths: 0
         parameters:
           populationSize: 0
           chromosomeLength: 0
@@ -6189,7 +6275,27 @@ MonoBehaviour:
           pCross: 0
           pMut: 0
           seed: 0
-          tspName: 0
+          cvrpEvaluator:
+            problemName: 
+            problemDescription: 
+            problemURL: 
+            filelistFilename: CVRPList.html
+            problemFilename: 
+            problems: []
+            nCustomers: 0
+            nVehicles: 0
+            vehicleCapacity: 0
+            customers: []
+            depots: []
+            depotIds: 
+            depotDistances: []
+            maxLKIterations: 0
+            Penalty: 10000
+            cMax: 100000
+            coordsSection: 0
+            demandSection: 0
+            depotSection: 0
+            totalCustomerDemand: 0
           localOptInterval: 0
           isDebug: 0
           nBits: 0
@@ -6203,16 +6309,35 @@ MonoBehaviour:
       avg: 0
       sumFitness: 0
       evaluator:
-        cities: []
-        nCities: 0
+        problemName: 
+        problemDescription: 
+        problemURL: 
+        filelistFilename: CVRPList.html
+        problemFilename: 
+        problems: []
+        nCustomers: 0
+        nVehicles: 0
+        vehicleCapacity: 0
+        customers: []
+        depots: []
+        depotIds: 
+        depotDistances: []
+        maxLKIterations: 0
+        Penalty: 10000
+        cMax: 100000
+        coordsSection: 0
+        demandSection: 0
+        depotSection: 0
+        totalCustomerDemand: 0
       bestIndividual:
         chromLength: 0
         chromosome: 
         fitness: 0
         objectiveFunction: 0
-        tspEvaluator:
-          cities: []
-          nCities: 0
+        routes: []
+        unserved: 
+        unservedDemand: 0
+        sumRouteLengths: 0
         parameters:
           populationSize: 0
           chromosomeLength: 0
@@ -6220,7 +6345,27 @@ MonoBehaviour:
           pCross: 0
           pMut: 0
           seed: 0
-          tspName: 0
+          cvrpEvaluator:
+            problemName: 
+            problemDescription: 
+            problemURL: 
+            filelistFilename: CVRPList.html
+            problemFilename: 
+            problems: []
+            nCustomers: 0
+            nVehicles: 0
+            vehicleCapacity: 0
+            customers: []
+            depots: []
+            depotIds: 
+            depotDistances: []
+            maxLKIterations: 0
+            Penalty: 10000
+            cMax: 100000
+            coordsSection: 0
+            demandSection: 0
+            depotSection: 0
+            totalCustomerDemand: 0
           localOptInterval: 0
           isDebug: 0
           nBits: 0
@@ -6228,9 +6373,6 @@ MonoBehaviour:
           min: 0
           max: 0
   LogSemaphore: 1
-  tsp:
-    cities: []
-    nCities: 0
 --- !u!4 &1589029307
 Transform:
   m_ObjectHideFlags: 0
@@ -6844,6 +6986,205 @@ MonoBehaviour:
   zCoordMin: 0
   zCoordMax: 0
   spacing: 1
+--- !u!1 &1905626759
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1905626760}
+  - component: {fileID: 1905626761}
+  m_Layer: 0
+  m_Name: CVRPPlotMgr
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1905626760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905626759}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 153481478}
+  m_Father: {fileID: 645226775}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1905626761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905626759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e9cbc47d5c127b429d9c664aba17a80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cvrpEvaluator:
+    problemName: 
+    problemDescription: 
+    problemURL: 
+    filelistFilename: CVRPList.html
+    problemFilename: 
+    problems: []
+    nCustomers: 0
+    nVehicles: 0
+    vehicleCapacity: 0
+    customers: []
+    depots: []
+    depotIds: 
+    depotDistances: []
+    maxLKIterations: 0
+    Penalty: 10000
+    cMax: 100000
+    coordsSection: 0
+    demandSection: 0
+    depotSection: 0
+    totalCustomerDemand: 0
+  gap:
+    populationSize: 0
+    chromosomeLength: 0
+    numberOfGenerations: 0
+    pCross: 0
+    pMut: 0
+    seed: 0
+    cvrpEvaluator:
+      problemName: 
+      problemDescription: 
+      problemURL: 
+      filelistFilename: CVRPList.html
+      problemFilename: 
+      problems: []
+      nCustomers: 0
+      nVehicles: 0
+      vehicleCapacity: 0
+      customers: []
+      depots: []
+      depotIds: 
+      depotDistances: []
+      maxLKIterations: 0
+      Penalty: 10000
+      cMax: 100000
+      coordsSection: 0
+      demandSection: 0
+      depotSection: 0
+      totalCustomerDemand: 0
+    localOptInterval: 0
+    isDebug: 0
+    nBits: 0
+    nVars: 0
+    min: 0
+    max: 0
+  routePlotters: []
+  PlotterPrefab: {fileID: 5475982904722358620, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+  best:
+    chromLength: 0
+    chromosome: 
+    fitness: 0
+    objectiveFunction: 0
+    routes: []
+    unserved: 
+    unservedDemand: 0
+    sumRouteLengths: 0
+    parameters:
+      populationSize: 0
+      chromosomeLength: 0
+      numberOfGenerations: 0
+      pCross: 0
+      pMut: 0
+      seed: 0
+      cvrpEvaluator:
+        problemName: 
+        problemDescription: 
+        problemURL: 
+        filelistFilename: CVRPList.html
+        problemFilename: 
+        problems: []
+        nCustomers: 0
+        nVehicles: 0
+        vehicleCapacity: 0
+        customers: []
+        depots: []
+        depotIds: 
+        depotDistances: []
+        maxLKIterations: 0
+        Penalty: 10000
+        cMax: 100000
+        coordsSection: 0
+        demandSection: 0
+        depotSection: 0
+        totalCustomerDemand: 0
+      localOptInterval: 0
+      isDebug: 0
+      nBits: 0
+      nVars: 0
+      min: 0
+      max: 0
+  tester:
+    chromLength: 0
+    chromosome: 
+    fitness: 0
+    objectiveFunction: 0
+    routes: []
+    unserved: 
+    unservedDemand: 0
+    sumRouteLengths: 0
+    parameters:
+      populationSize: 0
+      chromosomeLength: 0
+      numberOfGenerations: 0
+      pCross: 0
+      pMut: 0
+      seed: 0
+      cvrpEvaluator:
+        problemName: 
+        problemDescription: 
+        problemURL: 
+        filelistFilename: CVRPList.html
+        problemFilename: 
+        problems: []
+        nCustomers: 0
+        nVehicles: 0
+        vehicleCapacity: 0
+        customers: []
+        depots: []
+        depotIds: 
+        depotDistances: []
+        maxLKIterations: 0
+        Penalty: 10000
+        cMax: 100000
+        coordsSection: 0
+        demandSection: 0
+        depotSection: 0
+        totalCustomerDemand: 0
+      localOptInterval: 0
+      isDebug: 0
+      nBits: 0
+      nVars: 0
+      min: 0
+      max: 0
+  vColors:
+  - {r: 0, g: 0.99371064, b: 0, a: 1}
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 0, b: 1, a: 1}
+  - {r: 0.31304944, g: 0.66666657, b: 0, a: 1}
+  - {r: 0.37615198, g: 0.7530812, b: 0.836478, a: 1}
+  - {r: 0.5961834, g: 0.3764706, b: 0.8352941, a: 1}
+  - {r: 0.84276724, g: 0.26237085, b: 0.6659139, a: 1}
+  - {r: 0.84313726, g: 0.5850102, b: 0.26274517, a: 1}
+  - {r: 0.100950204, g: 0.37106913, b: 0, a: 1}
+  - {r: 0.123847894, g: 0.29470515, b: 0.38993704, a: 1}
 --- !u!114 &1955215295 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8687973154127179725, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
@@ -7617,23 +7958,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 489448305185984806, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 489448305185984806, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 489448305185984806, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 90
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 489448305185984806, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 357.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 489448305185984806, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -50
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 764079441986862849, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_Pivot.x
@@ -7757,7 +8098,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7469460885391603947, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_text
-      value: Function
+      value: Problem
       objectReference: {fileID: 0}
     - target: {fileID: 8687973154127179725, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
       propertyPath: m_Text
@@ -8048,6 +8389,67 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 764079441986862849, guid: bd27a7b66ea06f846bd4137b3e3933d0, type: 3}
   m_PrefabInstance: {fileID: 5875746739455626067}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6754852293581793001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1905626760}
+    m_Modifications:
+    - target: {fileID: 2572025906850570937, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_Name
+      value: CVRPPlotter
+      objectReference: {fileID: 0}
+    - target: {fileID: 2572025906850570937, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5732823175465449723, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4c734b35bf7be174f951133180fa87e3, type: 3}
 --- !u!114 &8822024186848171548
 MonoBehaviour:
   m_ObjectHideFlags: 0

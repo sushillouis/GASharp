@@ -19,17 +19,13 @@ public class GA {
 
     }
 
-    public void Init()
-    {
+    public void Init()    {
         InputHandler.inst.ThreadLog("Initializing GA");
-        
-        TSPEvaluator tspEval = new TSPEvaluator(gaParameters);
-        tspEval.Init();
 
         parents = new Population(gaParameters);
-        parents.Init(tspEval);
+        parents.Init(gaParameters.cvrpEvaluator);
         children = new Population(gaParameters);
-        children.Init(tspEval);
+        children.Init(gaParameters.cvrpEvaluator);
 
         parents.Evaluate();
         parents.Statistics();
@@ -64,11 +60,9 @@ public class GA {
     }
 
     public void LocalOptBest() {
-        parents.evaluator.LK2(parents.bestIndividual);
-        TSPPlotMgr.inst.SetBest(parents.bestIndividual);
+        parents.evaluator.LinK3CVRP(parents.bestIndividual);
+        CVRPPlotMgr.inst.SetBest(parents.bestIndividual);
         GAPlotMgr.inst.SetBest(parents.bestIndividual);
-        parents.evaluator.Evaluate(parents.bestIndividual);
-        InputHandler.inst.ThreadLog(parents.bestIndividual.ToString());
     }
 
     public void Cleanup()    {

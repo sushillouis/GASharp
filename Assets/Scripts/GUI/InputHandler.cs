@@ -19,7 +19,8 @@ public struct GAParameters
     public float pMut;
     public int seed;
 
-    public TSPName tspName;
+    public CVRPEvaluator cvrpEvaluator;
+
     public int localOptInterval;
     
     // for debugging
@@ -39,22 +40,30 @@ public class InputHandler : MonoBehaviour
     }
     private Thread GAThread;
     private int GAResult;
+    
+    public CVRPEvaluator cvrpEvaluator;
 
     // Start is called before the first frame update
     void Start()
     {
         GUIMgr.inst.State = GAState.GAInput;
         parameters = new GAParameters();
-        List<string> functionNameStrings = new List<string>(Enum.GetNames(typeof(TSPName)));
+        cvrpEvaluator = new CVRPEvaluator();
+        parameters.cvrpEvaluator = cvrpEvaluator;
+        List<string> problemNameStrings = cvrpEvaluator.LocalGetAvailableProblems();
+        cvrpEvaluator.problemFilename = problemNameStrings[0];
+
         FunctionDropdown.ClearOptions();
-        FunctionDropdown.AddOptions(functionNameStrings);
+        FunctionDropdown.AddOptions(problemNameStrings);
         LocalOpt.onClick.AddListener(OnLocalOpt);
+
     }
 
 
     public void OnFunctionDropdownChanged() {
         Debug.Log(FunctionDropdown.value);
-        parameters.tspName = (TSPName) FunctionDropdown.value;
+        cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
+
     }
 
     // Update is called once per frame
@@ -63,9 +72,11 @@ public class InputHandler : MonoBehaviour
         if(GUIMgr.inst.State == GAState.GARunning) {
             GAPlotMgr.inst.Plot();
             GAPlotMgr.inst.PlotBestChrom();
-            TSPPlotMgr.inst.PlotTour();
+            CVRPPlotMgr.inst.Plot();
         }
     }
+
+    [Header("Input handling")]
 
     public TMP_InputField PopulationSize;
     public TMP_InputField NumberOfGenerations;
@@ -90,19 +101,20 @@ public class InputHandler : MonoBehaviour
     public GAParameters parameters;
     public void OnSubmit() {
         GetParamsFromUI();
+        SetParams();
         GUIMgr.inst.State = GAState.GARunning;
 
         StartCoroutine(StartJobOnDataLoaded(1));
+
+
     }
 
     public void GetParamsFromUI() {
         parameters.populationSize = int.Parse(PopulationSize.text);
         parameters.numberOfGenerations = int.Parse(NumberOfGenerations.text);
 
-        parameters.tspName = (TSPName) FunctionDropdown.value;
-        SetParams(parameters);
         parameters.localOptInterval = int.Parse(LocalOptInterval.text);
-        parameters.chromosomeLength = TSPPlotMgr.inst.nCities;
+        //parameters.chromosomeLength = cvrpEvaluator.nCustomers;
 
         parameters.pCross = float.Parse(Px.text);
         parameters.pMut = float.Parse(Pm.text);
@@ -116,17 +128,22 @@ public class InputHandler : MonoBehaviour
             parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
     }
 
-    void SetParams(GAParameters gap) {
-        TSPPlotMgr.inst.Init(gap.tspName.ToString() + ".tsp");
+    void SetParams() {
+
+        cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
+        cvrpEvaluator.ReadLocal(cvrpEvaluator.problemFilename);
+        cvrpEvaluator.Init();
+        parameters.chromosomeLength = cvrpEvaluator.nCustomers;
+        Debug.Log("chromosomeLength: " + parameters.chromosomeLength);
+        CVRPPlotMgr.inst.Init(parameters);
+        //CVRPPlotMgr.inst.TestPlot();
+
         GAPlotMgr.inst.Init();
     }
 
     IEnumerator StartJobOnDataLoaded(float checkInterval) {
-        while(!TSPPlotMgr.inst.isDoneLoading) {
-            Debug.Log("WaitingToLoad data");
-            yield return new WaitForSeconds(checkInterval);
-        }
 
+        yield return null;
         HandleRunPlatform();
     }
     //---------------------------------------------------------------------------------------
@@ -183,23 +200,15 @@ public class InputHandler : MonoBehaviour
 
     public void OnLocalOpt() {
         ga.LocalOptBest();
+        TestSlicing();
     }
 
     //---------------------------------------------------------------------------------------
-    public TSPEvaluator tsp;
-    public void TestLK() {
-        GetParamsFromUI();
-        GARandom gar = new GARandom(parameters.seed);
-        tsp = new TSPEvaluator(parameters);
-        tsp.Init();
 
-        Individual x = new Individual(parameters);
-        x.Init();
-        tsp.Evaluate(x);
-
-        float fit = tsp.LK2(x);
-        Debug.Log("Evaluated fit: " +  fit);
+    public void TestSlicing() {
+        Individual ind = new Individual(parameters);
+        ind.Init();
+        cvrpEvaluator.TestSlicing(ind);
 
     }
-
 }

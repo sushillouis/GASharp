@@ -30,7 +30,7 @@ public class Plotter : MonoBehaviour {
         points = new List<Vector3>();
         LineRenderer[] lineRenderers = GetComponentsInChildren<LineRenderer>();
         foreach(LineRenderer lr in lineRenderers) {
-            Debug.Log(lr.name);
+            //Debug.Log(lr.name);
             if(lr.name.Contains("Axes"))
                 axes = lr;
             else
@@ -106,6 +106,29 @@ public class Plotter : MonoBehaviour {
             }
         }
     }
+
+    public void ShareLimits(List<Plotter> plotters) {
+        List<Vector3> sharedPoints = new List<Vector3>();
+        foreach(Plotter plotter in plotters) {
+            lock(plotter.points) {
+
+                foreach(Vector3 point in plotter.points) {
+                    RecomputeLimits(point);
+                    sharedPoints.Add(point);
+                }
+            }
+        }
+        
+    }
+
+    public void SetRoute(int i, List<Vector3> inRoute, Vector3 depot) {
+        SetPoints(inRoute);
+        lock(points) {
+            points.Insert(0, depot);
+        }
+        AddPoint(depot);
+    }
+
 
     public void PlotPoints() {
 
