@@ -30,6 +30,7 @@ public class CVRPPlotMgr : MonoBehaviour
             plotter.pointsRenderer.endColor = vColors[i];
             routePlotters.Add(plotter);
         }
+        SetColors();
 
     }
 
@@ -67,7 +68,7 @@ public class CVRPPlotMgr : MonoBehaviour
         foreach(Plotter plotter in routePlotters) {
             plotter.PlotPoints();
         }
-        SetColors();
+        //SetColors();
     }
 
 

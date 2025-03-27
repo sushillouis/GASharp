@@ -66,6 +66,7 @@ public class GAPlotMgr : MonoBehaviour
 
     public void SetBest(Individual individual) {
         chromosomeString = individual.ToString();
+
     }
 
     public void PlotBestChrom() {

@@ -16,11 +16,13 @@ public class Customer {
 [Serializable]
 public class CVRPEvaluator 
 {
+    public static string problemStrings = "E-n22-k4.vrp E-n30-k3.vrp F-n135-k7.vrp F-n45-k4.vrp F-n72-k4.vrp M-n101-k10.vrp X-n101-k25.vrp X-n167-k10.vrp X-n573-k30.vrp";
+
     public string problemName;
     public string problemDescription;
     public string problemURL;
     public string filelistFilename = "CVRPList.html";
-    public string problemFilename;
+    public string problemFilename = "E-n22-k4.vrp";
     public List<string> problems = new List<string>();
 
     [Header("Data")]
@@ -36,6 +38,16 @@ public class CVRPEvaluator
     public int maxLKIterations;
     public int Penalty = 1000;
     public float cMax = 100000;
+
+    public void ReadCVRPData(string filename) {
+        ReadUtils.inst.ReadFile(filename);
+    }
+
+    public void GetCVRPDataFromString(string content) {
+        string[] lines = content.Trim().Split('\n');
+        SetupProblemData(lines);
+    }
+
 
     public List<string> LocalGetAvailableProblems() {
         StreamReader sr = new StreamReader(filelistFilename);
@@ -114,9 +126,7 @@ public class CVRPEvaluator
                 continue;
             }
             if(coordsSection && !demandSection && !depotSection) {
-                Debug.Log("line: " + line);
                 string[] items = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries); //three items
-                Debug.Log("Items: " + string.Join(", ", items));
                 if(items.Length < 3)
                     items = line.Split('\t');
                 Customer c = new Customer();
@@ -174,6 +184,7 @@ public class CVRPEvaluator
         string[] lines = allContent.Split('\n');
         SetupProblemData(lines);
     }
+    //-------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------
     public float Evaluate(Individual ind) {
         //DecodeToRoutes(ind);

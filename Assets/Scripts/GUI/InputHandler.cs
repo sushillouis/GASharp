@@ -7,6 +7,7 @@ using TMPro;
 using System.Threading;
 using System;
 using System.Collections;
+using System.Linq;
 
 
 [Serializable]
@@ -50,7 +51,8 @@ public class InputHandler : MonoBehaviour
         parameters = new GAParameters();
         cvrpEvaluator = new CVRPEvaluator();
         parameters.cvrpEvaluator = cvrpEvaluator;
-        List<string> problemNameStrings = cvrpEvaluator.LocalGetAvailableProblems();
+
+        List<string> problemNameStrings = CVRPEvaluator.problemStrings.Split().ToList();
         cvrpEvaluator.problemFilename = problemNameStrings[0];
 
         FunctionDropdown.ClearOptions();
@@ -58,7 +60,6 @@ public class InputHandler : MonoBehaviour
         LocalOpt.onClick.AddListener(OnLocalOpt);
 
     }
-
 
     public void OnFunctionDropdownChanged() {
         Debug.Log(FunctionDropdown.value);
@@ -101,12 +102,9 @@ public class InputHandler : MonoBehaviour
     public GAParameters parameters;
     public void OnSubmit() {
         GetParamsFromUI();
-        SetParams();
-        GUIMgr.inst.State = GAState.GARunning;
-
+        SetupProblemData();
+        //wait for problem data to finish loading
         StartCoroutine(StartJobOnDataLoaded(1));
-
-
     }
 
     public void GetParamsFromUI() {
@@ -128,23 +126,24 @@ public class InputHandler : MonoBehaviour
             parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
     }
 
-    void SetParams() {
-
-        cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
-        cvrpEvaluator.ReadLocal(cvrpEvaluator.problemFilename);
-        cvrpEvaluator.Init();
-        parameters.chromosomeLength = cvrpEvaluator.nCustomers;
-        Debug.Log("chromosomeLength: " + parameters.chromosomeLength);
-        CVRPPlotMgr.inst.Init(parameters);
-        //CVRPPlotMgr.inst.TestPlot();
-
-        GAPlotMgr.inst.Init();
+    void SetupProblemData() {
+        parameters.cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
+        ReadUtils.inst.ReadFile(cvrpEvaluator.problemFilename); //start reading data
     }
 
     IEnumerator StartJobOnDataLoaded(float checkInterval) {
+        while(!ReadUtils.inst.isReadDone)
+            yield return new WaitForSeconds(checkInterval);
+        cvrpEvaluator.GetCVRPDataFromString(ReadUtils.inst.fileText);
+        cvrpEvaluator.Init();
+        parameters.chromosomeLength = cvrpEvaluator.nCustomers;
+        Debug.Log("chromosomeLength: " + parameters.chromosomeLength);
 
-        yield return null;
+        CVRPPlotMgr.inst.Init(parameters); // cvrp data available so you can init plotting
+        GAPlotMgr.inst.Init();
+
         HandleRunPlatform();
+        GUIMgr.inst.State = GAState.GARunning;
     }
     //---------------------------------------------------------------------------------------
 

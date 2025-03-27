@@ -19,6 +19,7 @@ public class CoGA : GA
         yield return null;
         for(int i = 0; i < gaParameters.numberOfGenerations; i++) {
             GenerationStep(i);
+            Debug.Log("finished gen: " + i);
             yield return null;
         }
         Cleanup();

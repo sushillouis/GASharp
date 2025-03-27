@@ -157,14 +157,14 @@ public class Population
     }
 
     public void LocalOpt(int start, int end) {
+
         for(int i = start; i < end; i++) {
             if(GARandom.inst.Flip(parameters.pMut))
                 evaluator.LocalOpt(members[i]);
         }
     }
 
-    public void Print()
-    {
+    public void Print() {
         for(int i = 0; i < parameters.populationSize; i++) {
             InputHandler.inst.ThreadLog(members[i].ToString());
         }

@@ -60,7 +60,7 @@ public class GA {
     }
 
     public void LocalOptBest() {
-        parents.evaluator.LinK3CVRP(parents.bestIndividual);
+        parents.evaluator.LK2CVRP(parents.bestIndividual);
         CVRPPlotMgr.inst.SetBest(parents.bestIndividual);
         GAPlotMgr.inst.SetBest(parents.bestIndividual);
     }
