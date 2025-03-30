@@ -10,7 +10,7 @@ using UnityEngine.AI;
 public class Customer {
     public Vector3 pos;
     public float demand;
-    public int id;
+    public int cid;
 }
 
 [Serializable]
@@ -35,7 +35,7 @@ public class CVRPEvaluator
 
     public int maxLKIterations;
     public int Penalty = 1000;
-    public float cMax = 100000;
+    public float cMax = 1000000;
 
     public List<string> LocalGetAvailableProblems() {
         StreamReader sr = new StreamReader(filelistFilename);
@@ -46,7 +46,7 @@ public class CVRPEvaluator
         return problems;
     }
 
-    public void Init() {
+    public virtual void Init() {
 
         distances = new float[nCustomers, nCustomers];
         depotDistances = new float[nCustomers];
@@ -114,15 +114,15 @@ public class CVRPEvaluator
                 continue;
             }
             if(coordsSection && !demandSection && !depotSection) {
-                Debug.Log("line: " + line);
+                //Debug.Log("line: " + line);
                 string[] items = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries); //three items
-                Debug.Log("Items: " + string.Join(", ", items));
+                //Debug.Log("Items: " + string.Join(", ", items));
                 if(items.Length < 3)
                     items = line.Split('\t');
                 Customer c = new Customer();
-                c.id = int.Parse(items[0].Trim());
+                c.cid = int.Parse(items[0].Trim());
                 c.pos = new Vector3(float.Parse(items[1].Trim()), 0, float.Parse(items[2].Trim()));
-                customers[c.id-1] = c;
+                customers[c.cid - 1] = c;
 
             }
             if(demandSection && !coordsSection && !depotSection) {
@@ -130,12 +130,12 @@ public class CVRPEvaluator
                 if(items.Length < 2)
                     items = line.Split('\t');
                 int cid = int.Parse(items[0].Trim());
-                customers[cid-1].demand = float.Parse(items[1].Trim());
+                customers[cid - 1].demand = float.Parse(items[1].Trim());
             }
             if(depotSection && !coordsSection && !demandSection) {
-                int cid = int.Parse(line.Trim());
-                if(cid > 0) {
-                    depotIds.Add(cid);
+                int did = int.Parse(line.Trim());
+                if(did > 0) {
+                    depotIds.Add(did);
                 } else {
                     depotSection = false;
                 }
@@ -149,12 +149,13 @@ public class CVRPEvaluator
         List<Customer> cList = customers.ToList();
         depots = new List<Customer>();
         foreach(int cit in depotIds) {
-            if(cList.Exists(x => x.id == cit)) {
-                Customer customer = cList.Find(x => x.id == cit);
+            if(cList.Exists(x => x.cid == cit)) {
+                Customer customer = cList.Find(x => x.cid == cit);
                 cList.Remove(customer);
                 depots.Add(customer);
             }
         }
+
         customers = cList.ToArray();
         nCustomers = cList.Count;
     }
@@ -176,8 +177,11 @@ public class CVRPEvaluator
     }
     //-------------------------------------------------------------------------------
     public float Evaluate(Individual ind) {
-        //DecodeToRoutes(ind);
-        Decode2(ind);
+        DecodeToRoutes(ind);
+        return EvaluateRoutes(ind);
+    }
+
+    public float EvaluateRoutes(Individual ind) {
         float sum = 0;
         float maxTourLength = 0;
         foreach(Route route in ind.routes) {
@@ -209,12 +213,14 @@ public class CVRPEvaluator
         return ind.fitness;
     }
 
-    public float LocalOpt(Individual ind) {
+
+    public virtual float LocalOpt(Individual ind) {
         return LK2CVRP(ind);
     }
 
 
-    public void Decode2(Individual ind) {
+    public virtual void DecodeToRoutes(Individual ind) {
+        //InputHandler.inst.ThreadLog("CVRPDecoding: \n");
         ind.routes.Clear();
         ind.unserved.Clear();
         ind.unservedDemand = 0;
@@ -226,8 +232,8 @@ public class CVRPEvaluator
         ind.routes.Add(currentRoute);
         
 
-        for(int i = 0; i < ind.chromLength; i++) {
-            int ci = ind.chromosome[i];
+        for(int i = 0; i < ind.parameters.seqChromLength; i++) {
+            int ci = ind.seqChrom[i];
             float demand = customers[ci].demand;
             if(currentRoute.demand + demand <= vehicleCapacity) {
                 currentRoute.demand += demand;
@@ -239,9 +245,9 @@ public class CVRPEvaluator
             } else {
                 ind.unservedDemand = 0;
                 ind.unserved.Clear();
-                for(int j = i; j < ind.chromLength; j++) {
-                    ind.unserved.Add(ind.chromosome[j]);
-                    ind.unservedDemand += customers[ind.chromosome[j]].demand;
+                for(int j = i; j < ind.parameters.seqChromLength; j++) {
+                    ind.unserved.Add(ind.seqChrom[j]);
+                    ind.unservedDemand += customers[ind.seqChrom[j]].demand;
                 }
                 break; // cannot add any customers, no vehicles left
             }
@@ -270,11 +276,11 @@ public class CVRPEvaluator
         while(hasImproved && count++ < maxLKIterations) {
             hasImproved = false;
             gain = 0;
-            for(int i = 0; i < ind.chromLength - 1; i++) {
-                for(int j = i + 1; j < ind.chromLength; j++) {
-                    Array.Reverse(ind.chromosome, i, j - i + 1); // reverse the portion
-                    float newFit = Evaluate(ind);
-                    Array.Reverse(ind.chromosome, i, j - i + 1); // reverse the portion
+            for(int i = 0; i < ind.parameters.seqChromLength - 1; i++) {
+                for(int j = i + 1; j < ind.parameters.seqChromLength; j++) {
+                    Array.Reverse(ind.seqChrom, i, j - i + 1); // reverse the portion
+                    float newFit = this.Evaluate(ind);
+                    Array.Reverse(ind.seqChrom, i, j - i + 1); // reverse the portion
                     gain = newFit - oldFit;
                     if(gain > maxGain) {
                         maxGain = gain;
@@ -288,15 +294,15 @@ public class CVRPEvaluator
             }
 
             if(hasImproved) {
-                Array.Reverse(ind.chromosome, mi, mj - mi + 1); // reverse the portion
-                ind.fitness = Evaluate(ind);
+                Array.Reverse(ind.seqChrom, mi, mj - mi + 1); // reverse the portion
+                ind.fitness = this.Evaluate(ind);
                 maxGain = 0;
                 oldFit = ind.fitness;
                 oldObj = ind.objectiveFunction;
                 //InputHandler.inst.ThreadLog($"EndWhile\n: {ind.ToString()}");
             }
         }
-        float fit = Evaluate(ind);
+        float fit = this.Evaluate(ind);
         //InputHandler.inst.ThreadLog("Best After LocalOpt: \n" + ind.ToString());
         return ind.fitness;
     }
@@ -306,22 +312,21 @@ public class CVRPEvaluator
         float maxGain = 0;
         bool hasImproved = true;
         int count = 0;
-        int mi = 0, mj = -1;
         float oldFit, oldObj;
-        int[] origChrom = ind.chromosome;//        [0..ind.chromosome.Length];
-        int[] bestChrom = ind.chromosome;
+        int[] origChrom = ind.seqChrom;//        [0..ind.chromosome.Length];
+        int[] bestChrom = ind.seqChrom;
         InputHandler.inst.ThreadLog("Best: \n" + ind.ToString());
         oldFit = ind.fitness;
         oldObj = ind.objectiveFunction;
         while(hasImproved && count++ < maxLKIterations) {
             hasImproved = false;
             gain = 0;
-            for(int i = 1; i < ind.chromLength - 2; i++) {
-                for(int j = i + 1; j < ind.chromLength - 1 ; j++) {
-                    for(int k = j + 1; k < ind.chromLength-1; k++) {
-                        List<int[]> variants = GenerateVariants(ind.chromosome, i, j, k);
+            for(int i = 1; i < ind.parameters.seqChromLength - 2; i++) {
+                for(int j = i + 1; j < ind.parameters.seqChromLength - 1 ; j++) {
+                    for(int k = j + 1; k < ind.parameters.seqChromLength -1; k++) {
+                        List<int[]> variants = GenerateVariants(ind.seqChrom, i, j, k);
                         foreach(int[] chrom in variants) {
-                            ind.chromosome = chrom;
+                            ind.seqChrom = chrom;
                             float newFit = Evaluate(ind);
                             gain = newFit - oldFit;
                             if(gain > maxGain) {
@@ -338,8 +343,8 @@ public class CVRPEvaluator
             }
             if(hasImproved) {
 
-                ind.chromosome = bestChrom;
-                InputHandler.inst.ThreadLog("Chrom!C: " + string.Join(", ", ind.chromosome));
+                ind.seqChrom = bestChrom;
+                InputHandler.inst.ThreadLog("Chrom!C: " + string.Join(", ", ind.seqChrom));
                 ind.fitness = Evaluate(ind);
                 InputHandler.inst.ThreadLog($"Fit: {ind.fitness}, obj: {ind.objectiveFunction}");
                 maxGain = 0;
@@ -350,7 +355,7 @@ public class CVRPEvaluator
 
         }
 
-        ind.chromosome = bestChrom;
+        ind.seqChrom = bestChrom;
         float fit = Evaluate(ind);
         InputHandler.inst.ThreadLog("3Opt: \n" + ind.ToString());
         return ind.fitness;
@@ -403,7 +408,7 @@ public class CVRPEvaluator
     }
 
     public void TestSlicing(Individual ind) {
-        List<int[]> x = GenerateVariants(ind.chromosome, 2, 5, 9);
+        List<int[]> x = GenerateVariants(ind.seqChrom, 2, 5, 9);
         return;
 
     }

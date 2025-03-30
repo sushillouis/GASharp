@@ -20,7 +20,7 @@ public class CVRPPlotMgr : MonoBehaviour
     public void Init(GAParameters pars) {
 
         gap = pars;
-        cvrpEvaluator = pars.cvrpEvaluator;
+        cvrpEvaluator = pars.metaCVRPEvaluator;
         SetupColors(cvrpEvaluator.nVehicles);
         routePlotters.Clear();
         for(int i = 0; i < cvrpEvaluator.nVehicles; i++) {
@@ -75,18 +75,18 @@ public class CVRPPlotMgr : MonoBehaviour
     public void TestPlot() {
         tester = new Individual(gap);
 
-        for(int i = 0; i < tester.chromLength; i++) {
-            tester.chromosome[i] = i;
+        for(int i = 0; i < gap.seqChromLength; i++) {
+            tester.seqChrom[i] = i;
         }
 
-        cvrpEvaluator.Decode2(tester);
+        cvrpEvaluator.DecodeToRoutes(tester);
         SetBest(tester);
         Plot();
     }
 
     public List<Color> vColors = new List<Color>();
     public void SetupColors(int nColors = 10) {
-        if(vColors.Count < gap.cvrpEvaluator.nVehicles) {
+        if(vColors.Count < gap.metaCVRPEvaluator.nVehicles) {
             float hue = Random.value;//        GARandom.inst.rand.Next();
             float gr = 0.61803398875f;
             for(int i = vColors.Count; i < nColors; i++) {

@@ -10,18 +10,21 @@ using System.Collections;
 
 
 [Serializable]
-public struct GAParameters
+public class GAParameters
 {
     public int populationSize;
-    public int chromosomeLength;
+    public int bitChromLength;
+    public int seqChromLength;
     public int numberOfGenerations;
     public float pCross;
     public float pMut;
+    public float pmCat;
     public int seed;
 
-    public CVRPEvaluator cvrpEvaluator;
+    public MetaCVRPEvaluator metaCVRPEvaluator;
 
     public int localOptInterval;
+    public int npInterval;
     
     // for debugging
     public bool isDebug;
@@ -39,30 +42,28 @@ public class InputHandler : MonoBehaviour
         inst = this; 
     }
     private Thread GAThread;
-    private int GAResult;
     
-    public CVRPEvaluator cvrpEvaluator;
+    public MetaCVRPEvaluator MetaCVRPEvaluator;
 
     // Start is called before the first frame update
     void Start()
     {
         GUIMgr.inst.State = GAState.GAInput;
         parameters = new GAParameters();
-        cvrpEvaluator = new CVRPEvaluator();
-        parameters.cvrpEvaluator = cvrpEvaluator;
-        List<string> problemNameStrings = cvrpEvaluator.LocalGetAvailableProblems();
-        cvrpEvaluator.problemFilename = problemNameStrings[0];
+        MetaCVRPEvaluator = new MetaCVRPEvaluator();
+        parameters.metaCVRPEvaluator = MetaCVRPEvaluator;
+        List<string> problemNameStrings = MetaCVRPEvaluator.LocalGetAvailableProblems();
+        MetaCVRPEvaluator.problemFilename = problemNameStrings[0];
 
         FunctionDropdown.ClearOptions();
         FunctionDropdown.AddOptions(problemNameStrings);
         LocalOpt.onClick.AddListener(OnLocalOpt);
-
     }
 
 
     public void OnFunctionDropdownChanged() {
         Debug.Log(FunctionDropdown.value);
-        cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
+        MetaCVRPEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
 
     }
 
@@ -87,9 +88,11 @@ public class InputHandler : MonoBehaviour
     public TMP_InputField MaxIn;
 
     public TMP_InputField LocalOptInterval;
+    public TMP_InputField NPInterval;
     public TMP_InputField ChromosomeLength;
     public TMP_InputField Px;
     public TMP_InputField Pm;
+    public TMP_InputField pmCat;
     public TMP_InputField Seed;
     public Toggle DebugToggle;
     public TMP_Dropdown FunctionDropdown;
@@ -114,30 +117,32 @@ public class InputHandler : MonoBehaviour
         parameters.numberOfGenerations = int.Parse(NumberOfGenerations.text);
 
         parameters.localOptInterval = int.Parse(LocalOptInterval.text);
-        //parameters.chromosomeLength = cvrpEvaluator.nCustomers;
+        parameters.npInterval = int.Parse(NPInterval.text);
 
         parameters.pCross = float.Parse(Px.text);
         parameters.pMut = float.Parse(Pm.text);
+        parameters.pmCat = float.Parse(pmCat.text);
         parameters.seed = int.Parse(Seed.text);
         parameters.isDebug = DebugToggle.isOn;
 
         Debug.Log("GAParameters: pop: " + parameters.populationSize + ", ngens: " +
-            parameters.numberOfGenerations + ", chromlength: " + parameters.chromosomeLength + ", min: " +
-            parameters.min + ", max: " + parameters.max + ", nBits: " + parameters.nBits + ", nVars: " +
+            parameters.numberOfGenerations + ", chromlength: " + parameters.bitChromLength + ", min: " +
+            parameters.min + ", max: " + parameters.max + ", nHeuristicBits: " + parameters.nBits + ", nVars: " +
             parameters.nVars + ", pCross: " +
             parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
     }
 
     void SetParams() {
 
-        cvrpEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
-        cvrpEvaluator.ReadLocal(cvrpEvaluator.problemFilename);
-        cvrpEvaluator.Init();
-        parameters.chromosomeLength = cvrpEvaluator.nCustomers;
-        Debug.Log("chromosomeLength: " + parameters.chromosomeLength);
-        CVRPPlotMgr.inst.Init(parameters);
-        //CVRPPlotMgr.inst.TestPlot();
+        MetaCVRPEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
+        MetaCVRPEvaluator.ReadLocal(MetaCVRPEvaluator.problemFilename);
+        MetaCVRPEvaluator.Init(); //sets nBits below
+        parameters.bitChromLength = MetaCVRPEvaluator.nCustomers * MetaCVRPEvaluator.nBits;
+        Debug.Log("bitChromLength: " + parameters.bitChromLength);
+        parameters.seqChromLength = MetaCVRPEvaluator.nCustomers;
+        Debug.Log("seqChromLength: " + parameters.seqChromLength);
 
+        CVRPPlotMgr.inst.Init(parameters);
         GAPlotMgr.inst.Init();
     }
 
@@ -200,7 +205,7 @@ public class InputHandler : MonoBehaviour
 
     public void OnLocalOpt() {
         ga.LocalOptBest();
-        TestSlicing();
+        //TestSlicing();
     }
 
     //---------------------------------------------------------------------------------------
@@ -208,7 +213,7 @@ public class InputHandler : MonoBehaviour
     public void TestSlicing() {
         Individual ind = new Individual(parameters);
         ind.Init();
-        cvrpEvaluator.TestSlicing(ind);
+        MetaCVRPEvaluator.TestSlicing(ind);
 
     }
 }

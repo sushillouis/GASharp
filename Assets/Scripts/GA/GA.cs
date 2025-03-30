@@ -23,9 +23,9 @@ public class GA {
         InputHandler.inst.ThreadLog("Initializing GA");
 
         parents = new Population(gaParameters);
-        parents.Init(gaParameters.cvrpEvaluator);
+        parents.Init(gaParameters.metaCVRPEvaluator);
         children = new Population(gaParameters);
-        children.Init(gaParameters.cvrpEvaluator);
+        children.Init(gaParameters.metaCVRPEvaluator);
 
         parents.Evaluate();
         parents.Statistics();
@@ -37,22 +37,25 @@ public class GA {
 
     public void Evolve()
     {
-        for(int i = 1; i < gaParameters.numberOfGenerations; i++) {
+        for(int i = 0; i < gaParameters.numberOfGenerations; i++) {
             GenerationStep(i);
         }
         //parents.Print();
 
-
+        parents.evaluator.LocalOpt(parents.bestIndividual);
     }
 
     public void GenerationStep(int gen) {
         //parents.Generation(children);
+        //parents.CHCWithCataclysms(children, gen);
         parents.CHCGeneration(children);
+
         if(gen % gaParameters.localOptInterval == 0)
             children.LocalOpt(0, gaParameters.populationSize);
+
+
         children.Statistics();
         children.Report(gen);
-
 
         Population tmp = parents;
         parents = children;
@@ -60,7 +63,8 @@ public class GA {
     }
 
     public void LocalOptBest() {
-        parents.evaluator.LinK3CVRP(parents.bestIndividual);
+        parents.evaluator.LocalOpt(parents.bestIndividual);
+
         CVRPPlotMgr.inst.SetBest(parents.bestIndividual);
         GAPlotMgr.inst.SetBest(parents.bestIndividual);
     }

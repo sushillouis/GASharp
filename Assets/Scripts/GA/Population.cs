@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+[Serializable]
 public enum DeJong {
     F1 = 0, F2, F3, F4, F5,
 }
@@ -14,18 +15,20 @@ public class Population
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
-    public CVRPEvaluator evaluator;// Constructed in Population constructor
+    public MetaCVRPEvaluator evaluator;// Constructed in Population constructor
+    public CataclysmTracker fitnessTracker;
 
     public Individual bestIndividual;
 
     public Population(GAParameters p) {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
+        fitnessTracker = new CataclysmTracker(parameters.npInterval);
     }
 
-    public void Init(CVRPEvaluator cvrpEvaluator)
+    public void Init(MetaCVRPEvaluator metaCVRPEvaluator)
     {
-        evaluator = cvrpEvaluator;
+        evaluator = metaCVRPEvaluator;
 
         for(int i = 0; i < members.Length; i++) {
             members[i] = new Individual(parameters);
@@ -55,15 +58,15 @@ public class Population
     }
     public void Reproduce(Individual parent1, Individual parent2, Individual child1, Individual child2)
     {
-        for(int i = 0; i < parameters.chromosomeLength; i++) {
-            child1.chromosome[i] = parent1.chromosome[i];
-            child2.chromosome[i] = parent2.chromosome[i];
+        for(int i = 0; i < parameters.bitChromLength; i++) {
+            child1.bitChrom[i] = parent1.bitChrom[i];
+            child2.bitChrom[i] = parent2.bitChrom[i];
         }
 
         if(GARandom.inst.Flip(parameters.pCross))
-            //XOver.Greedy(parent1, parent2, child1, child2, parameters.chromosomeLength, evaluator);
-            XOver.PMX(parent1, parent2, child1, child2, parameters.chromosomeLength);
-        //            XOver.OnePoint(parent1, parent2, child1, child2, parameters.chromosomeLength);
+            XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
+        //XOver.Greedy(parent1, parent2, child1, child2, parameters.bitChromLength, evaluator);
+        //XOver.PMX(parent1, parent2, child1, child2, parameters.bitChromLength);
 
         child1.Mutate(parameters.pMut);
         child2.Mutate(parameters.pMut);
@@ -77,8 +80,18 @@ public class Population
         }
     }
 
-    public void CHCGeneration(Population child)
-    {
+    public void CHCWithCataclysms(Population child, int gen) {
+        fitnessTracker.Enqueue(max);
+        if(fitnessTracker.CheckCataclysm() && gen % parameters.localOptInterval != 0) {
+            fitnessTracker.Reset();
+            CataclysmicEvent(0, parameters.populationSize);
+            Statistics();
+        } 
+        CHCGeneration(child);
+
+    }
+
+    public void CHCGeneration(Population child) {
         int p1, p2;
         Individual parent1, parent2, child1, child2;
         for(int i = 0; i < parameters.populationSize; i += 2) {
@@ -156,7 +169,25 @@ public class Population
         }
     }
 
+
+    public void CataclysmicEvent(int start, int end) {
+        members[start] = bestIndividual;
+        for(int i = start + 1; i < end; i++) {
+            for(int j = 0; j < parameters.bitChromLength; j++) {
+                if(GARandom.inst.Flip(parameters.pmCat))
+                    members[i].bitChrom[j] = 1 - bestIndividual.bitChrom[j];
+                else
+                    members[i].bitChrom[j] = bestIndividual.bitChrom[j];
+            }
+        }
+        Evaluate(start, end);
+
+    }
+
     public void LocalOpt(int start, int end) {
+
+        Statistics();
+        evaluator.LocalOpt(bestIndividual);
         for(int i = start; i < end; i++) {
             if(GARandom.inst.Flip(parameters.pMut))
                 evaluator.LocalOpt(members[i]);

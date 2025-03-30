@@ -39,8 +39,8 @@ public class TSPPlotMgr : MonoBehaviour
     
     public void SetBest(Individual individual) {
         tour.Clear();
-        for(int i = 0; i < individual.chromLength; i++) {
-            tour.Add(cities[individual.chromosome[i]]);
+        for(int i = 0; i < individual.parameters.seqChromLength; i++) {
+            tour.Add(cities[individual.seqChrom[i]]);
         }
         tspPlotter.SetPoints(tour);
     }

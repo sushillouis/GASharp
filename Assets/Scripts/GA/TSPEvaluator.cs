@@ -31,7 +31,7 @@ public class TSPEvaluator
     public float[,] distances;
     public int maxLKIterations = 100;
     public void Init() {
-        cities = new Vector3[gap.chromosomeLength];
+        cities = new Vector3[gap.bitChromLength];
         //GA gets initialized and calls this only after app files have been loaded.
         cities = TSPPlotMgr.inst.cities.ToArray();
         nCities = TSPPlotMgr.inst.nCities; 
@@ -58,12 +58,12 @@ public class TSPEvaluator
 
     public float Evaluate(Individual individual) {
         float tourLength = 0;
-        for(int i = 1; i < individual.chromLength; i++) {
-            int first = individual.chromosome[i-1];
-            int second = individual.chromosome[i];
+        for(int i = 1; i < individual.parameters.seqChromLength; i++) {
+            int first = individual.seqChrom[i-1];
+            int second = individual.seqChrom[i];
             tourLength += distances[first, second];
         }
-        tourLength += distances[individual.chromosome[individual.chromLength - 1], individual.chromosome[0]];
+        tourLength += distances[individual.seqChrom[individual.parameters.seqChromLength - 1], individual.seqChrom[0]];
         individual.objectiveFunction = tourLength;
         individual.fitness = 1000000 - tourLength;
 
@@ -81,7 +81,7 @@ public class TSPEvaluator
 
         float oldFit = individual.fitness;
         float newFit = -1;
-        for(int i = 0; i < individual.chromLength - 1; i++) {
+        for(int i = 0; i < individual.parameters.seqChromLength - 1; i++) {
             SwapIndexes(individual, i, i + 1);
             newFit = Evaluate(individual);
 
@@ -112,14 +112,14 @@ public class TSPEvaluator
             hasImproved = false;
             maxGain = 0;
 
-            for(int i = 1; i < ind.chromLength - 1; i++) {
-                for(int j = i + 1; j < ind.chromLength - 1; j++) {
+            for(int i = 1; i < ind.parameters.seqChromLength - 1; i++) {
+                for(int j = i + 1; j < ind.parameters.seqChromLength - 1; j++) {
 
-                    di = distances[ind.chromosome[i - 1], ind.chromosome[i]];
-                    dj = distances[ind.chromosome[j], ind.chromosome[j + 1]];
+                    di = distances[ind.seqChrom[i - 1], ind.seqChrom[i]];
+                    dj = distances[ind.seqChrom[j], ind.seqChrom[j + 1]];
 
-                    ndi = distances[ind.chromosome[i], ind.chromosome[j + 1]];
-                    ndj = distances[ind.chromosome[j], ind.chromosome[i - 1]];
+                    ndi = distances[ind.seqChrom[i], ind.seqChrom[j + 1]];
+                    ndj = distances[ind.seqChrom[j], ind.seqChrom[i - 1]];
 
                     gain = (di + dj) - (ndi + ndj);
                     if(gain > maxGain) {
@@ -134,7 +134,7 @@ public class TSPEvaluator
             //int[] chrom = ind.chromosome;
             //InputHandler.inst.ThreadLog($"i-1: {bi-1}, c[i-1]: {chrom[bi-1]}, i:{bi}, c[i]:{chrom[bi]} || j:{bj}, c[j]: {chrom[bj]}, j+1: {bj+1}, c[j+1]: {chrom[bj+1]}");
             if(hasImproved) {
-                Array.Reverse(ind.chromosome, bi, bj - bi + 1);
+                Array.Reverse(ind.seqChrom, bi, bj - bi + 1);
                 newObj = ind.objectiveFunction - maxGain;
                 newFit = ind.fitness + maxGain;
                 ind.objectiveFunction = newObj;
@@ -153,9 +153,9 @@ public class TSPEvaluator
     }
 
     public void SwapIndexes(Individual ind, int i, int j) {
-        int x1 = ind.chromosome[i];
-        ind.chromosome[i] = ind.chromosome[j];
-        ind.chromosome[j] = x1;
+        int x1 = ind.seqChrom[i];
+        ind.seqChrom[i] = ind.seqChrom[j];
+        ind.seqChrom[j] = x1;
 
     }
 
