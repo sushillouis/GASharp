@@ -64,7 +64,8 @@ public class Population
         }
 
         if(GARandom.inst.Flip(parameters.pCross))
-            XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
+            XOver.UX(parent1, parent2, child1, child2, parameters.bitChromLength);
+        //XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
         //XOver.Greedy(parent1, parent2, child1, child2, parameters.bitChromLength, evaluator);
         //XOver.PMX(parent1, parent2, child1, child2, parameters.bitChromLength);
 

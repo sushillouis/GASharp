@@ -197,9 +197,11 @@ public class InputHandler : MonoBehaviour
     public string LogSemaphore = "1";
     public void ThreadLog(string msg)
     {
-        lock(LogSemaphore) {
-            Debug.Log("GAThrd---> " + msg);
+        if(parameters.isDebug) {
+            lock(LogSemaphore) {
+                Debug.Log("GAThrd---> " + msg);
 
+            }
         }
     }
 

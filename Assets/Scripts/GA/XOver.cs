@@ -28,6 +28,36 @@ public static class XOver
 
     }
 
+    public static void UX(Individual parent1, Individual parent2, Individual child1, Individual child2, int chromosomeLength) {
+        for(int i = 0; i < chromosomeLength; i++) {
+            if(GARandom.inst.Flip(0.5f)) {
+                child1.bitChrom[i] = parent1.bitChrom[i];
+                child2.bitChrom[i] = parent2.bitChrom[i];
+            } else {
+                child1.bitChrom[i] = parent2.bitChrom[i];
+                child2.bitChrom[i] = parent1.bitChrom[i];
+            }
+        }
+    }
+
+    public static void HUX(Individual parent1, Individual parent2, Individual child1, Individual child2, int chromosomeLength) {
+
+        for(int i = 0; i < chromosomeLength; i++) {
+            if(parent1.bitChrom[i] == parent2.bitChrom[i]) {
+                child1.bitChrom[i] = parent1.bitChrom[i];
+                child2.bitChrom[i] = parent2.bitChrom[i];
+            } else {
+                if(GARandom.inst.Flip(0.5f)) {
+                    child1.bitChrom[i] = parent1.bitChrom[i];
+                    child2.bitChrom[i] = parent2.bitChrom[i];
+                } else {
+                    child1.bitChrom[i] = parent2.bitChrom[i];
+                    child2.bitChrom[i] = parent1.bitChrom[i];
+                }
+            }
+        }
+    }
+
     public static void Greedy(Individual parent1, Individual parent2, Individual child1, Individual child2, int chromosomeLength, TSPEvaluator tspEvaluator) {
         int xp1 = GARandom.inst.RandInt(0, chromosomeLength);
         int xp2 = GARandom.inst.RandInt(xp1 + 1, chromosomeLength);
