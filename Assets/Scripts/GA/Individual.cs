@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 
@@ -9,23 +10,6 @@ public enum TSPRepresentationType {
     Heuristics,
 }
 
-[Serializable]
-public class Route{
-    public int vid = -1;
-    public float demand = -1;
-    public float capacity = 0;
-    public List<int> tour;
-    public float tourLength = 0;
-
-    public Route() {
-        tour = new List<int>();
-    }
-
-    public override string ToString() {
-        return "Route: vid: " + vid + ", demand: " + demand + ", tourLength: " + tourLength + " |" + string.Join(", ", tour) + "|";
-    }
-
-}
 
 [Serializable]
 public class Individual : IComparable<Individual>
@@ -39,9 +23,9 @@ public class Individual : IComparable<Individual>
     public List<Route> routes = new List<Route>();
     public List<int> unserved = new List<int>();
     public List<int> available = new List<int>();
-    public List<int> workingList = new List<int>();
     public float unservedDemand = 0;
     public float sumRouteLengths = 0;
+    public float overCapacity = 0;
 
     public GAParameters parameters;
 
@@ -63,7 +47,7 @@ public class Individual : IComparable<Individual>
         GAUtils.Shuffle<int>(seqChrom);
 
         routes.Clear();
-        parameters.metaCVRPEvaluator.InitRoutes(this);
+        parameters.evaluator.Initialize(this);
 
 
 
@@ -113,11 +97,14 @@ public class Individual : IComparable<Individual>
             sb.Append(seqChrom[i].ToString("0") + ", ");
         }
         sb.Append("\n");
-        sb.Append("Obj: " + objectiveFunction.ToString("0.000") + ", Fit: " + fitness.ToString("0.000") + "\n");
+        sb.Append("Obj: " + objectiveFunction.ToString("0.0") + ", Fit: " + fitness.ToString("0.0") + 
+            ", length: " + sumRouteLengths.ToString("0.0") + ", unserved: " + unservedDemand.ToString("0.0") +
+            ", OverCapacity: " + overCapacity + "\n");
 
         foreach(Route route in routes) {
-            sb.Append("| " + string.Join(", ", route.tour) + ", dem: " + route.demand + " |");
+            sb.Append(route.ToString() + ", ");
         }
+        sb.Append("\nUnserved: (" + string.Join(",", unserved) + ") ");
         return sb.ToString();
     }
 

@@ -7,6 +7,7 @@ using System;
 public enum PlotType {
     TSP,
     GA,
+    Cluster,
 }
 
 
@@ -46,7 +47,7 @@ public class Plotter : MonoBehaviour {
         zMax = axes.GetPosition(2).z - spacing;
     }
 
-    void InitLimits(Vector3 point) {
+    public void InitLimits(Vector3 point) {
         xCoordMin = xCoordMax = point.x;
         zCoordMin = zCoordMax = point.z;
         xInc = 1;
@@ -122,7 +123,7 @@ public class Plotter : MonoBehaviour {
     }
 
     public void SetRoute(int i, List<Vector3> inRoute, Vector3 depot) {
-        SetPoints(inRoute);
+        if(inRoute.Count > 0) SetPoints(inRoute);
         lock(points) {
             points.Insert(0, depot);
         }
@@ -145,7 +146,7 @@ public class Plotter : MonoBehaviour {
         }
     }
 
-    Vector3 Convert(Vector3 point) {
+    public Vector3 Convert(Vector3 point) {
         float x = xMin + ((point.x - xCoordMin) * xInc);
         float z = zMin + ((point.z - zCoordMin) * zInc);
         return new Vector3(x, 0, z) + offset;

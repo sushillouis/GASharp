@@ -15,7 +15,7 @@ public class Population
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
-    public MetaCVRPEvaluator evaluator;// Constructed in Population constructor
+    public CVRP2 evaluator;// Constructed in Population constructor
     public CataclysmTracker fitnessTracker;
 
     public Individual bestIndividual;
@@ -26,7 +26,7 @@ public class Population
         fitnessTracker = new CataclysmTracker(parameters.npInterval);
     }
 
-    public void Init(MetaCVRPEvaluator metaCVRPEvaluator)
+    public void Init(CVRP2 metaCVRPEvaluator)
     {
         evaluator = metaCVRPEvaluator;
 
@@ -64,10 +64,11 @@ public class Population
         }
 
         if(GARandom.inst.Flip(parameters.pCross))
-            XOver.UX(parent1, parent2, child1, child2, parameters.bitChromLength);
-        //XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
-        //XOver.Greedy(parent1, parent2, child1, child2, parameters.bitChromLength, evaluator);
-        //XOver.PMX(parent1, parent2, child1, child2, parameters.bitChromLength);
+            //XOver.UX(parent1, parent2, child1, child2, parameters.bitChromLength);
+            XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
+
+            //XOver.Greedy(parent1, parent2, child1, child2, parameters.bitChromLength, evaluator);
+            //XOver.PMX(parent1, parent2, child1, child2, parameters.bitChromLength);
 
         child1.Mutate(parameters.pMut);
         child2.Mutate(parameters.pMut);
@@ -96,8 +97,10 @@ public class Population
         int p1, p2;
         Individual parent1, parent2, child1, child2;
         for(int i = 0; i < parameters.populationSize; i += 2) {
-            p1 = ProportionalSelector();
-            p2 = ProportionalSelector();
+            //p1 = ProportionalSelector();
+            //p2 = ProportionalSelector();
+            p1 = GARandom.inst.RandInt(0, parameters.populationSize);
+            p2 = GARandom.inst.RandInt(0, parameters.populationSize);
             parent1 = members[p1];
             parent2 = members[p2];
 
@@ -116,6 +119,7 @@ public class Population
         GAPlotMgr.inst.SetBest(bestIndividual);
         CVRPPlotMgr.inst.SetBest(bestIndividual);
 
+
         string report = gen + ": " + min + ", " + avg + ", " + max;
         InputHandler.inst.ThreadLog(report);
 
@@ -128,22 +132,24 @@ public class Population
     {
         Statistics(0, parameters.populationSize);
     }
+
     public void Statistics(int start, int end)
     {
-        float fit;
+        float fit; // = members[start].fitness;
         bestIndividual = members[start];
         min = max = sumFitness = members[start].fitness;
         for(int i =  start + 1; i < end; i++) {
             fit = members[i].fitness;
             sumFitness += fit;
-            if(fit < min) min = fit;
+            if(fit < min) {
+                min = fit;
+            }
             if(fit > max) {
                 max = fit;
                 bestIndividual = members[i];
             }
         }
         avg = sumFitness/(end - start);
-
     }
 
     public int ProportionalSelector() // always on members[0 .. population size]
@@ -187,10 +193,10 @@ public class Population
 
     public void LocalOpt(int start, int end) {
 
-        Statistics();
-        evaluator.LocalOpt(bestIndividual);
+        //Statistics();
+        //evaluator.LocalOpt(bestIndividual);
         for(int i = start; i < end; i++) {
-            if(GARandom.inst.Flip(parameters.pMut))
+            if(GARandom.inst.Flip(parameters.pLocalOpt))
                 evaluator.LocalOpt(members[i]);
         }
     }

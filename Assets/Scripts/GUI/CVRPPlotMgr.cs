@@ -10,7 +10,7 @@ public class CVRPPlotMgr : MonoBehaviour
         inst = this;
     }
 
-    public CVRPEvaluator cvrpEvaluator;
+    public CVRPData cvrpData;
     public GAParameters gap;
 
     public List<Plotter> routePlotters = new List<Plotter>();
@@ -20,10 +20,10 @@ public class CVRPPlotMgr : MonoBehaviour
     public void Init(GAParameters pars) {
 
         gap = pars;
-        cvrpEvaluator = pars.metaCVRPEvaluator;
-        SetupColors(cvrpEvaluator.nVehicles);
+        cvrpData = pars.cvrpData;
+        SetupColors(cvrpData.nVehicles);
         routePlotters.Clear();
-        for(int i = 0; i < cvrpEvaluator.nVehicles; i++) {
+        for(int i = 0; i < cvrpData.nVehicles; i++) {
             Plotter plotter = Instantiate(PlotterPrefab, transform);
             plotter.InitAxes();
             plotter.pointsRenderer.startColor = vColors[i];
@@ -49,10 +49,10 @@ public class CVRPPlotMgr : MonoBehaviour
         foreach(Route route in ind.routes) {
             List<Vector3> positions = new List<Vector3>();
             foreach(int ci in route.tour) {
-                Vector3 pos = cvrpEvaluator.customers[ci].pos;
+                Vector3 pos = cvrpData.customers[ci].pos;
                 positions.Add(pos);
             }
-            routePlotters[route.vid].SetRoute(route.vid, positions, cvrpEvaluator.depots[0].pos);
+            routePlotters[route.vid].SetRoute(route.vid, positions, cvrpData.depots[0].pos);
             vehicleIndex++;
         }
 
@@ -79,14 +79,14 @@ public class CVRPPlotMgr : MonoBehaviour
             tester.seqChrom[i] = i;
         }
 
-        cvrpEvaluator.DecodeToRoutes(tester);
+        gap.evaluator.Decode(tester);
         SetBest(tester);
         Plot();
     }
 
     public List<Color> vColors = new List<Color>();
     public void SetupColors(int nColors = 10) {
-        if(vColors.Count < gap.metaCVRPEvaluator.nVehicles) {
+        if(vColors.Count < gap.cvrpData.nVehicles) {
             float hue = Random.value;//        GARandom.inst.rand.Next();
             float gr = 0.61803398875f;
             for(int i = vColors.Count; i < nColors; i++) {

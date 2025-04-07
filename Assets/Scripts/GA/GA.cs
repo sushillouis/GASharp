@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using Unity.Collections;
 
@@ -7,6 +6,7 @@ using Unity.Collections;
 public class GA {
     public GAParameters gaParameters;
     public Population parents, children;
+    public volatile bool isRunning = true;
     public GA(GAParameters gap)
     {
         gaParameters = gap;
@@ -23,9 +23,9 @@ public class GA {
         InputHandler.inst.ThreadLog("Initializing GA");
 
         parents = new Population(gaParameters);
-        parents.Init(gaParameters.metaCVRPEvaluator);
+        parents.Init(gaParameters.evaluator);
         children = new Population(gaParameters);
-        children.Init(gaParameters.metaCVRPEvaluator);
+        children.Init(gaParameters.evaluator);
 
         parents.Evaluate();
         parents.Statistics();
@@ -37,22 +37,23 @@ public class GA {
 
     public void Evolve()
     {
-        for(int i = 0; i < gaParameters.numberOfGenerations; i++) {
+        for(int i = 1; i < gaParameters.numberOfGenerations; i++) {
             GenerationStep(i);
+            if(!isRunning) {
+                InputHandler.inst.ThreadLog("Stopping GA Thread");
+                break;
+            }
         }
-        //parents.Print();
+        //parents.evaluator.LocalOpt(parents.bestIndividual);
 
-        parents.evaluator.LocalOpt(parents.bestIndividual);
     }
 
     public void GenerationStep(int gen) {
         //parents.Generation(children);
-        //parents.CHCWithCataclysms(children, gen);
         parents.CHCGeneration(children);
 
         if(gen % gaParameters.localOptInterval == 0)
             children.LocalOpt(0, gaParameters.populationSize);
-
 
         children.Statistics();
         children.Report(gen);

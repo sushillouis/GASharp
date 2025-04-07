@@ -21,6 +21,7 @@ public class CoGA : GA
             GenerationStep(i);
             yield return null;
         }
+        //parents.evaluator.LocalOpt(parents.bestIndividual);
         Cleanup();
         Debug.Log("CoGA done!");
     }

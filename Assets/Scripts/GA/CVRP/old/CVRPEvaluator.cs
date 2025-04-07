@@ -7,13 +7,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [Serializable]
-public class Customer {
-    public Vector3 pos;
-    public float demand;
-    public int cid;
-}
-
-[Serializable]
 public class CVRPEvaluator 
 {
     public string problemName;
@@ -60,8 +53,8 @@ public class CVRPEvaluator
         }
         for(int i = 0; i < nCustomers; i++) {
             for(int j = i + 1; j < nCustomers; j++) {
-                distances[i,j] = Mathf.RoundToInt(Vector3.Distance(customers[i].pos, customers[j].pos));
-                distances[j,i] = distances[i, j];
+                distances[i, j] = Mathf.RoundToInt(Vector3.Distance(customers[i].pos, customers[j].pos));
+                distances[j, i] = distances[i, j];
             }
         }
         for(int i = 0; i < nCustomers; i++) {
@@ -79,6 +72,7 @@ public class CVRPEvaluator
 
     public void SetupProblemData(string[] lines) {
         foreach(string line in lines) {
+            //Debug.Log("Line: " + line);
             if(line.Contains("NAME")) {
                 problemName = line.Substring(7);
                 string[] items = line.Trim().Split('-');
@@ -225,7 +219,7 @@ public class CVRPEvaluator
         ind.unserved.Clear();
         ind.unservedDemand = 0;
 
-        Route currentRoute = new Route();
+        Route currentRoute = new Route(distances, depotDistances, customers, depots);
         currentRoute.vid = 0; 
         currentRoute.demand = 0;
         currentRoute.tour.Clear();
@@ -255,7 +249,7 @@ public class CVRPEvaluator
     }
 
     Route CreateAndAddNewRoute(int vid, int ci, float demand) {
-        Route route = new Route();
+        Route route = new Route(distances, depotDistances, customers, depots);
         route.vid = vid;
         route.demand = demand;
         route.tour.Clear();
@@ -303,7 +297,7 @@ public class CVRPEvaluator
             }
         }
         float fit = this.Evaluate(ind);
-        //InputHandler.inst.ThreadLog("Best After LocalOpt: \n" + ind.ToString());
+        //InputHandler.inst.ThreadLog("Best After LocalOptButton: \n" + ind.ToString());
         return ind.fitness;
     }
 

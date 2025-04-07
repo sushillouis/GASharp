@@ -1,10 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [Serializable]
-public enum RouteSorter {
+public class RouteNeighbors {
+    public Route route;
+    public List<Route> neighbors;
+
+}
+
+[Serializable]
+public enum RouteHeuristic {
     TourLength = 0,
     Demand,
     VehicleId,
@@ -27,7 +35,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
     public int nRouteHeuristicBits = 2;
     public int nRouteRankBits = 1;
 
-    public int nBits = -1; //sum of the above
+    public int nBits = -1; //testSum of the above
 
     public float routePrecision = 0;
     public float customerPrecision = 0;
@@ -90,7 +98,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
     }
 
     Route ApplyRouteHeuristic(Individual ind, int routeHeuristic, int routeRank) {
-        RouteSorter rs = (RouteSorter) routeHeuristic;
+        RouteHeuristic rs = (RouteHeuristic) routeHeuristic;
         ind.routes.Sort((a, b) => RouteComparer(a, b, rs));
         //RouteSort(rs, ind.routes);
         if(ind.routes.Count > routeRank)
@@ -260,7 +268,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
     public void InitRoutes(Individual ind) {
         ind.routes.Clear();
         for(int i = 0; i < nVehicles; i++) {
-            Route route = new Route();
+            Route route = new Route(distances, depotDistances, customers, depots);
             route.demand = route.tourLength = 0;
             route.vid = i;
             route.tour.Clear();
@@ -305,19 +313,19 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
             return result;
     }
 
-    public int RouteComparer(Route routeA, Route routeB, RouteSorter compareType) {
+    public int RouteComparer(Route routeA, Route routeB, RouteHeuristic compareType) {
         int result = 0;
         switch(compareType) {
-            case RouteSorter.TourLength:
+            case RouteHeuristic.TourLength:
                 result = routeA.tourLength.CompareTo(routeB.tourLength);
                 break;
-            case RouteSorter.Demand:
+            case RouteHeuristic.Demand:
                 result = routeA.demand.CompareTo(routeB.demand);
                 break;
-            case RouteSorter.VehicleId:
+            case RouteHeuristic.VehicleId:
                 result = routeA.vid.CompareTo(routeB.vid);
                 break;
-            case RouteSorter.RemainingDemand:
+            case RouteHeuristic.RemainingDemand:
                 result = (vehicleCapacity - routeB.demand).CompareTo(vehicleCapacity - routeA.demand);
                 break;
             default:
@@ -329,14 +337,71 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
             return result;
     }
 
-    public void RouteSort(RouteSorter compareType, List<Route> routes) {
+    public void RouteSort(RouteHeuristic compareType, List<Route> routes) {
         routes.Sort((a, b) => RouteComparer(a, b, compareType));
+    }
+    //--------------------------------------------------------------------------------
+
+    public void NeighborMerge(Individual ind) {
+        //TODO
+        List<(Route, Route)> neighbors = new List<(Route, Route)>();
+        foreach(Route route in ind.routes) {
+            foreach(Route neighbor in ind.routes) {
+                if(route != neighbor) {
+                    if(IsNeighbor(ind, route, neighbor)) {
+                        neighbors.Add((route, neighbor));
+                    }
+                }
+            }
+        }
+    }
+
+    public bool IsNeighbor(Individual ind, Route baseRoute, Route b) {
+
+
+
+        return false;
+    }
+    
+    public List<RouteNeighbors> GetRouteNeighbors(Individual ind) {
+        List<RouteNeighbors> routeNeighbors = new List<RouteNeighbors>();
+        foreach(Route route in ind.routes) {
+            RouteNeighbors rn = new RouteNeighbors();
+            rn.route = route;
+            rn.neighbors = new List<Route>();
+            foreach(Route neighbor in ind.routes) {
+                if(route != neighbor) {
+                    rn.neighbors.Add(neighbor);
+
+                }
+            }
+
+            routeNeighbors.Add(rn);
+        }
+        return routeNeighbors;
+    }
+    public void NeighborSort(Individual ind) {
+
+
+
+
     }
 
 
+    public Vector3 Centroid(Route route) {
+        Vector3 sum = new Vector3(0, 0, 0);
+        foreach(int cu in route.tour) {
+            sum += (customers[cu].pos = depots[0].pos);
+        }
+        return sum / route.tour.Count;
+    }
 
+    public float CenteroidAngle(Vector3 centroid) {
+        return Mathf.Atan2(centroid.z, centroid.x) * Mathf.Rad2Deg;
 
-    //--------------------------------------------------------------------------------
+    }
+
+        //--------------------------------------------------------------------------------
     public override float LocalOpt(Individual ind) {
         //return BSO(ind);
         return SHC(ind);
@@ -381,7 +446,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
 
     public int maxSHCIterations = 40;
     public float SHC(Individual ind) { // simple randomized hill climber
-        maxSHCIterations = ind.parameters.bitChromLength;
+        maxSHCIterations = ind.parameters.bitChromLength;//Mathf.Min(ind.parameters.bitChromLength/2, 100);
         float oldFit = Evaluate(ind);
         float oldObj = ind.objectiveFunction;
         float newFit = -1;
@@ -434,7 +499,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
     }
 
   
- List<Route> InitRoutes() {
+ List<Route> Initialize() {
         List<Route> routes = new List<Route>();
         for(int i = 0; i < nVehicles; i++) {
             Route route = new Route();
@@ -472,7 +537,7 @@ public class MetaCVRPEvaluator : CVRPEvaluator {
         for(int i = 0; i < ind.parameters.seqChromLength; i++) 
             tmpWorkingList.Add(i);
         tmpRoutes.Clear();
-        tmpRoutes = InitRoutes();
+        tmpRoutes = Initialize();
 
         int bitIndex = 0;
         int currentCustomerIndex = -1;
@@ -555,7 +620,7 @@ Error
             ind.workingList.Clear();
             ind.unserved.Clear();
             ind.routes.Clear();
-            ind.routes = InitRoutes();
+            ind.routes = Initialize();
             for(int i = 0; i < nCustomers; i++) {
                 ind.available.Add(i);
                 ind.workingList.Add(i);
@@ -627,7 +692,7 @@ Error
 
 
     bool isSeqEval = false;
-    public override float LocalOpt(Individual ind) {
+    public override float LocalOptButton(Individual ind) {
 
         BitsToSeq(ind);
         isSeqEval = true;
@@ -659,7 +724,7 @@ Error
             ind.workingList.Add(i);
         }
         tmpRoutes.Clear();
-        tmpRoutes = InitRoutes();
+        tmpRoutes = Initialize();
         Route currentRoute;
         int seqIndex = 0;
         ind.workingList.Sort((a, b) => depotDistances[a].CompareTo(depotDistances[b]));

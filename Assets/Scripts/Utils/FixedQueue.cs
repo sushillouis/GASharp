@@ -11,7 +11,7 @@ public class FixedQueue<T> : Queue<T> {
         maxSize = limit;
     }
     public new void Enqueue(T item) {
-        Debug.Log("Enqueueing: " + item + ", Count: " + Count + ", maxSize: " + maxSize);
+        //Debug.Log("Enqueueing: " + item + ", Count: " + Count + ", maxSize: " + maxSize);
         if(Count >= maxSize) {
             Dequeue();
         }

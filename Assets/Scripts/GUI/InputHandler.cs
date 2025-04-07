@@ -19,9 +19,12 @@ public class GAParameters
     public float pCross;
     public float pMut;
     public float pmCat;
+    public float pLocalOpt;
     public int seed;
 
-    public MetaCVRPEvaluator metaCVRPEvaluator;
+    public CVRP2 evaluator;
+    public CVRPData cvrpData;
+    public CVRPRepresentationType representationType = CVRPRepresentationType.RouteCityHeuristics;
 
     public int localOptInterval;
     public int npInterval;
@@ -42,29 +45,31 @@ public class InputHandler : MonoBehaviour
         inst = this; 
     }
     private Thread GAThread;
-    
-    public MetaCVRPEvaluator MetaCVRPEvaluator;
+
+    public CVRPData cvrpData;
 
     // Start is called before the first frame update
     void Start()
     {
         GUIMgr.inst.State = GAState.GAInput;
         parameters = new GAParameters();
-        MetaCVRPEvaluator = new MetaCVRPEvaluator();
-        parameters.metaCVRPEvaluator = MetaCVRPEvaluator;
-        List<string> problemNameStrings = MetaCVRPEvaluator.LocalGetAvailableProblems();
-        MetaCVRPEvaluator.problemFilename = problemNameStrings[0];
+        cvrpData = new CVRPData();
+        parameters.cvrpData = cvrpData;
+        List<string> problemNameStrings = cvrpData.GetProblemNames();
 
         FunctionDropdown.ClearOptions();
         FunctionDropdown.AddOptions(problemNameStrings);
-        LocalOpt.onClick.AddListener(OnLocalOpt);
+        LocalOptButton.onClick.AddListener(OnLocalOpt);
+
+        Debug.Log("Core count: " + SystemInfo.processorCount);
+        Debug.Log("Core count: " + System.Environment.ProcessorCount);
+        Debug.Log("Graphics device: " + SystemInfo.graphicsDeviceName);
     }
 
 
     public void OnFunctionDropdownChanged() {
         Debug.Log(FunctionDropdown.value);
-        MetaCVRPEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
-
+        cvrpData.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
     }
 
     // Update is called once per frame
@@ -93,21 +98,22 @@ public class InputHandler : MonoBehaviour
     public TMP_InputField Px;
     public TMP_InputField Pm;
     public TMP_InputField pmCat;
+    public TMP_InputField pmLocalOpt;
     public TMP_InputField Seed;
     public Toggle DebugToggle;
     public TMP_Dropdown FunctionDropdown;
 
-    public Button Submit;
-    public Button LocalOpt;
+    public Button SubmitButton;
+    public Button LocalOptButton;
 
 
     public GAParameters parameters;
     public void OnSubmit() {
         GetParamsFromUI();
-        SetParams();
+        SetupEvaluation();
         GUIMgr.inst.State = GAState.GARunning;
-
-        StartCoroutine(StartJobOnDataLoaded(1));
+        //TestCluster();
+        StartCoroutine(StartJobOnDataLoaded(0.1f));
 
 
     }
@@ -117,6 +123,8 @@ public class InputHandler : MonoBehaviour
         parameters.numberOfGenerations = int.Parse(NumberOfGenerations.text);
 
         parameters.localOptInterval = int.Parse(LocalOptInterval.text);
+        parameters.pLocalOpt = float.Parse(pmLocalOpt.text);
+
         parameters.npInterval = int.Parse(NPInterval.text);
 
         parameters.pCross = float.Parse(Px.text);
@@ -132,23 +140,24 @@ public class InputHandler : MonoBehaviour
             parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
     }
 
-    void SetParams() {
+    void SetupEvaluation() {
+        cvrpData.LoadData(FunctionDropdown.options[FunctionDropdown.value].text.Trim(), parameters.representationType);
 
-        MetaCVRPEvaluator.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text.Trim();
-        MetaCVRPEvaluator.ReadLocal(MetaCVRPEvaluator.problemFilename);
-        MetaCVRPEvaluator.Init(); //sets nBits below
-        parameters.bitChromLength = MetaCVRPEvaluator.nCustomers * MetaCVRPEvaluator.nBits;
+        parameters.evaluator = new CVRP2(cvrpData);
+    }
+
+    IEnumerator StartJobOnDataLoaded(float checkInterval) {
+        while(!cvrpData.isDataLoaded)
+            yield return new WaitForSeconds(checkInterval);
+
+        parameters.bitChromLength = parameters.evaluator.GetChromLength();
         Debug.Log("bitChromLength: " + parameters.bitChromLength);
-        parameters.seqChromLength = MetaCVRPEvaluator.nCustomers;
+        parameters.seqChromLength = cvrpData.nCustomers;
         Debug.Log("seqChromLength: " + parameters.seqChromLength);
 
         CVRPPlotMgr.inst.Init(parameters);
         GAPlotMgr.inst.Init();
-    }
 
-    IEnumerator StartJobOnDataLoaded(float checkInterval) {
-
-        yield return null;
         HandleRunPlatform();
     }
     //---------------------------------------------------------------------------------------
@@ -171,32 +180,32 @@ public class InputHandler : MonoBehaviour
         Debug.Log("CoGA started!");
     }
 
-    void StartJob()
-    {
+    void StartJob()    {
         GAThread = new Thread(GAStarter);
         GAThread.Start();
-        //GUIMgr.inst.State = GAState.GARunning;
     }
     
     public GA ga;
-    public void GAStarter()
-    {
+    public void GAStarter()    {
         ga = new GA(parameters);
         ga.Run();
         Debug.Log("GA done: ");
 
     }
 
-    private void OnDestroy()
-    {
+    private void OnDestroy() {
+        if(ga != null) {
+            ga.isRunning = false; //stop threads if running
+            StopAllCoroutines();  //stop coroutines if running on webgl
+            ga.Cleanup();
+        }
         if(GAThread != null) GAThread.Join();
     }
 
     //---------------------------------------------------------------------------------------
 
     public string LogSemaphore = "1";
-    public void ThreadLog(string msg)
-    {
+    public void ThreadLog(string msg)    {
         if(parameters.isDebug) {
             lock(LogSemaphore) {
                 Debug.Log("GAThrd---> " + msg);
@@ -215,7 +224,16 @@ public class InputHandler : MonoBehaviour
     public void TestSlicing() {
         Individual ind = new Individual(parameters);
         ind.Init();
-        MetaCVRPEvaluator.TestSlicing(ind);
+        //evaluator.TestSlicing(ind);
+    }
 
+    public List<Cluster> clusters = new List<Cluster>();
+    public void TestCluster() {
+        ClusterK clusterK = new ClusterK(parameters.cvrpData.customers);
+        clusterK.Cluster(parameters.cvrpData.nVehicles);
+        clusters = clusterK.myClusters;
+
+        ClusterPlotMgr.inst.Init(parameters.cvrpData.customers, parameters.cvrpData.nVehicles);
+        ClusterPlotMgr.inst.SetClusters(clusterK.myClusters);
     }
 }
