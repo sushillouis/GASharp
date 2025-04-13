@@ -19,6 +19,7 @@ public class ClusterPlotMgr : MonoBehaviour
 
     public List<Cluster> clusters;
     public Plotter plotter;
+    public CVRPPlotMgr cvrpPlotMgr;
 
     // Start is called before the first frame update
     void Start()    {
@@ -59,7 +60,7 @@ public class ClusterPlotMgr : MonoBehaviour
 
         foreach(Cluster cluster in clusters) {
             GameObject cGo = circles[clusterIndex];
-            Color clusterColor = CVRPPlotMgr.inst.vColors[clusterIndex];
+            Color clusterColor = cvrpPlotMgr.vColors[clusterIndex];
             cGo.transform.position = plotter.Convert(cluster.centroid);
             cGo.transform.localScale = new Vector3(cluster.radius*2 * plotter.xInc, 1, cluster.radius*2*plotter.zInc);
             cGo.GetComponentInChildren<MeshRenderer>().material.color = clusterColor;

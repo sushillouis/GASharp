@@ -10,8 +10,8 @@ public class CoGA : GA
         instance = this;
     }
 
-    public void RunAsCoroutine(InputHandler ih) {
-        ih.StartCoroutine(CoGAEvolve());
+    public void RunAsCoroutine(GAMgr gam) {
+        gam.StartCoroutine(CoGAEvolve());
     }
 
     IEnumerator CoGAEvolve() {

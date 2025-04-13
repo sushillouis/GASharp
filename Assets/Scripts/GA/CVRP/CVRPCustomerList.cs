@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CVRPCustomerList : ICVRPEvaluator {
+public class CVRPCustomerList : IEvaluator {
     public CVRPData cvrpData;
     public float cMax = 1000000;
     public float overCapacityPenalty = 10;

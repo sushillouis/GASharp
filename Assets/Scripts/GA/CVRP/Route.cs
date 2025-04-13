@@ -24,11 +24,16 @@ public class Route {
     public Vector3 centroid;
     public float diameter;
 
+    public int outlierIndexInRoute;
+    public int outlierCustomerIndex;
+
+
     public float[,] distances;
     public float[] depotDistances;
     public List<Customer> depots;
     public Customer[] customers;
     public int[] depotIndices;
+
 
 
 
@@ -57,9 +62,20 @@ public class Route {
         diameter = 0;
     }
 
+    public void Copy(Route other) {
+        this.vid = other.vid;
+        this.demand = other.demand;
+        this.overCapacity = other.overCapacity;
+        this.tour = new List<int>(other.tour);
+        this.tourLength = other.tourLength;
+        this.centroid = other.centroid;
+        this.diameter = other.diameter;
+    }
+
     public override string ToString() {
-        return "R: " + vid + ", dem: " + demand + ", Length: " + tourLength +
-            ", ctrd: " + centroid.ToString() + ", diam: " + diameter + " |" + string.Join(", ", tour) + "|";
+        return "R: " + vid + //", dem: " + demand + ", Length: " + tourLength +
+            //", ctrd: " + centroid.ToString() + ", diam: " + diameter +
+            " | " + string.Join(", ", tour) + " |";
     }
 
     public float ComputeTourLength() {
@@ -79,6 +95,27 @@ public class Route {
         ComputeCentroid();
         ComputeDiameter();
         ComputeDemand();
+    }
+
+
+    public (int, int) FindOutlier(bool[] swapped) {
+        float maxDistSqr = 0;
+        float distSqr;
+        int index = 0;
+        outlierIndexInRoute = -1;
+        outlierCustomerIndex = -1;
+        foreach(int ci in tour) {
+            if(!swapped[ci]) {
+                distSqr = Vector3.SqrMagnitude(customers[ci].pos - centroid);
+                if(distSqr > maxDistSqr) {
+                    maxDistSqr = distSqr;
+                    outlierIndexInRoute = index;
+                    outlierCustomerIndex = ci;
+                }
+            }
+            index++;
+        }
+        return (outlierIndexInRoute, outlierCustomerIndex);
     }
 
     public void ComputeCentroid() {
@@ -106,7 +143,7 @@ public class Route {
         diameter = radius * 2;
     }
 
-    public int maxLKIterations = 100;
+    public int maxLKIterations = 400;
     public float LK2() {
         //InputHandler.inst.ThreadLog(ToString());
         float di, dj;

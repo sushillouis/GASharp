@@ -1,13 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
-using UnityEngine.AI;
-
-
-
 
 [Serializable]
 public enum TSPName {
@@ -55,7 +47,6 @@ public class TSPEvaluator
         }
     }
 
-
     public float Evaluate(Individual individual) {
         float tourLength = 0;
         for(int i = 1; i < individual.parameters.seqChromLength; i++) {
@@ -75,7 +66,6 @@ public class TSPEvaluator
     public float GetDistance(int i, int j) {
         return distances[i, j];
     }
-
  
     public float LocalOpt(Individual individual) {
 
@@ -95,7 +85,6 @@ public class TSPEvaluator
         newFit = Evaluate(individual);
         return newFit;
     }
-
 
     public float LK2(Individual ind) {
         //InputHandler.inst.ThreadLog(ind.ToString());
@@ -160,8 +149,3 @@ public class TSPEvaluator
     }
 
 }
-//27, 39, 28, 74, 41, 4, 15, 5, 48, 67, 63, 32, 69, 55, 49, 1, 38, 62, 16, 43, 14, 21, 18, 23, 51, 50, 0, 54, 30, 34, 47, 36, 11, 10, 46, 35, 33, 60, 8, 12, 40, 61, 56, 25, 71, 45, 42, 19, 44, 65, 22, 66, 75, 53, 37, 29, 68, 57, 58, 17, 13, 3, 20, 6, 64, 31, 24, 52, 9, 59, 70, 73, 72, 26, 2, 7, 
-//                                                                                         23, 51, 50, 0, 54, 30, 34, 47, 36, 11, 10, 46, 35, 33, 60, 8, 12, 40, 61, 56, 25, 71, 45, 42, 19, 44, 65, 22, 66, 75, 53, 37, 29, 68, 57, 58
-//                                                                                         58, 57, 68, 29, 37, 53, 75, 66, 22, 65, 44, 19, 42, 45, 71, 25, 56, 61, 40, 12, 8, 60, 33, 35, 46, 10, 11, 36, 47, 34, 30, 54, 0, 50, 51, 23
-//27, 39, 28, 74, 41, 4, 15, 5, 48, 67, 63, 32, 69, 55, 49, 1, 38, 62, 16, 43, 14, 21, 18, 58, 57, 68, 29, 37, 53, 75, 66, 22, 65, 44, 19, 42, 45, 71, 25, 56, 61, 40, 12, 8, 60, 33, 35, 46, 10, 11, 36, 47, 34, 30, 54, 0, 50, 51, 23, 17, 13, 3, 20, 6, 64, 31, 24, 52, 9, 59, 70, 73, 72, 26, 2, 7, 
-

@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+
 public class CVRPPlotMgr : MonoBehaviour
 {
-    public static CVRPPlotMgr inst;
-    private void Awake() {
-        inst = this;
-    }
+    //public static CVRPPlotMgr inst;
+    //private void Awake() {
+    //    inst = this;
+    //}
 
     public CVRPData cvrpData;
     public GAParameters gap;
@@ -20,7 +21,7 @@ public class CVRPPlotMgr : MonoBehaviour
     public void Init(GAParameters pars) {
 
         gap = pars;
-        cvrpData = pars.cvrpData;
+        cvrpData = pars.problem.cvrpData;
         SetupColors(cvrpData.nVehicles);
         routePlotters.Clear();
         for(int i = 0; i < cvrpData.nVehicles; i++) {
@@ -31,6 +32,11 @@ public class CVRPPlotMgr : MonoBehaviour
             routePlotters.Add(plotter);
         }
 
+    }
+
+    public void ResetPlotters() {
+        foreach(Plotter plotter in routePlotters) 
+            plotter.ResetPlotter();
     }
 
     [ContextMenu("SetColors")]
@@ -79,15 +85,15 @@ public class CVRPPlotMgr : MonoBehaviour
             tester.seqChrom[i] = i;
         }
 
-        gap.evaluator.Decode(tester);
+        gap.problem.evaluator.Decode(tester);
         SetBest(tester);
         Plot();
     }
 
     public List<Color> vColors = new List<Color>();
     public void SetupColors(int nColors = 10) {
-        if(vColors.Count < gap.cvrpData.nVehicles) {
-            float hue = Random.value;//        GARandom.inst.rand.Next();
+        if(vColors.Count < gap.problem.cvrpData.nVehicles) {
+            float hue = (float) GARandom.inst.rand.NextDouble();// (Random.value;//        GARandom.inst.rand.Next();
             float gr = 0.61803398875f;
             for(int i = vColors.Count; i < nColors; i++) {
                 hue += gr;

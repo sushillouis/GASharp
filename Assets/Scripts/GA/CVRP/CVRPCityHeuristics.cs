@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 
 [Serializable]
-public class CVRPCityHeuristics : ICVRPEvaluator {
+public class CVRPCityHeuristics : IEvaluator {
 
     public CVRPData cvrpData;
     public float cMax = 1000000;

@@ -7,7 +7,7 @@ using UnityEngine;
 public class FixedQueue<T> : Queue<T> {
     public int maxSize;
     public FixedQueue(int limit) : base() {
-        Debug.Log("Creating FixedQueue with limit: " + limit);
+        //Debug.Log("Creating FixedQueue with limit: " + limit);
         maxSize = limit;
     }
     public new void Enqueue(T item) {
@@ -25,7 +25,7 @@ public class CataclysmTracker : FixedQueue<float> {
     public float newSum = 0;
     public float oldSum = 0;
     public CataclysmTracker(int limit) : base(limit) {
-        Debug.Log("Creating CataclysmTracker with limit: " + limit);
+       // Debug.Log("Creating CataclysmTracker with limit: " + limit);
 
     }
 
@@ -47,7 +47,7 @@ public class CataclysmTracker : FixedQueue<float> {
     public void Reset() {
         oldSum = newSum = 0;
         Clear();
-        Debug.Log("Resetting CataclysmTracker, count: " + Count);
+        //Debug.Log("Resetting CataclysmTracker, count: " + Count);
 
     }
 

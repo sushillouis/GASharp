@@ -19,6 +19,19 @@ public class DistanceList {
     public List<float> distances = new List<float>();
 }
 
+[Serializable]
+public class HeuristicsList {
+    public int routeHerisitic;
+    public int routeRank;
+    public int customerHeuristic;
+    public int customerRank;
+}
+
+[Serializable]
+public class SwapTrackList {
+    
+
+}
 
 [Serializable]
 public class CVRPData {
@@ -27,7 +40,7 @@ public class CVRPData {
     public string problemName = "E-n22-k4";
     public string problemDescription = "E-n22-k4";
 
-    public CVRPRepresentationType representationType;
+    public CVRPRepresentationType representationType = CVRPRepresentationType.RouteCityHeuristics;
 
     public List<DistanceList> distancesList = new List<DistanceList>();
 
@@ -38,6 +51,7 @@ public class CVRPData {
     public Customer[] customers;
     public Customer[] depots;
     public List<int> depotIds = new List<int>();
+    public int[] nearest;
 
     public Vector3 depotPosition = Vector3.zero;
 
@@ -48,9 +62,10 @@ public class CVRPData {
     public CVRPData() {
 
     }
-    public void LoadData(string filename, CVRPRepresentationType repType) {
-        this.problemFilenames = filename;
-        this.representationType = repType;
+    //public void LoadData(string filename, CVRPRepresentationType repType) {
+    public void LoadData(CVRPProblem cvrpProblem) {
+        this.problemFilename = cvrpProblem.cvrpData.problemFilename;
+        this.representationType = cvrpProblem.cvrpData.representationType;
         isDataLoaded = false;
         InputHandler.inst.StartCoroutine(ReadCoroutine(problemFilename));
     }
@@ -80,10 +95,11 @@ public class CVRPData {
         distances = new float[nCustomers, nCustomers];
         depotDistances = new float[nCustomers];
         depotPosition = depots[0].pos;
+        nearest = new int[nCustomers];
 
-        ComputeDistances();
-        ConvertDistancesToList();
-
+        ComputeDistances();       //distances and depotDistances
+        ConvertDistancesToList(); //for debugging
+        ComputeNearest();         //Compute nearest customer for each customer. Assumes ComputeDistances() is called first
     }
 
     void ComputeDistances() {
@@ -111,9 +127,20 @@ public class CVRPData {
         SetupDistances();
 
         isDataLoaded = true;
-
     }
 
+    public void ComputeNearest() {
+
+        for(int i = 0; i < nCustomers; i++) {
+            float min = float.MaxValue;
+            for(int j = 0; j < nCustomers; j++) {
+                if(i != j && distances[i, j] < min) {
+                    nearest[i] = j;
+                    min = distances[i, j];
+                }
+            }
+        }
+    }
 
 
     //---------------------------------------------------------------------------------------

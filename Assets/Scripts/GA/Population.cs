@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 [Serializable]
 public enum DeJong {
@@ -15,18 +16,28 @@ public class Population
     GAParameters parameters;
     public Individual[] members;
     public float min, max, avg, sumFitness;
-    public CVRP2 evaluator;// Constructed in Population constructor
+    public IEvaluator evaluator;// Constructed in Population constructor
     public CataclysmTracker fitnessTracker;
+    public ThreadSyncer threadSyncer;
 
     public Individual bestIndividual;
 
-    public Population(GAParameters p) {
+    public Individual bestCopy;//for cataclysmic event
+
+    public List<Individual> evaluatableMembers;
+    public GAPlotData gaPlotData;
+
+    public Population(GAParameters p, ThreadSyncer threadSyncer, List<Individual> evaluatableMembers) {
         parameters = p;
         members = new Individual[parameters.populationSize * 2]; // *2 for CHC implementation since children double popsize
         fitnessTracker = new CataclysmTracker(parameters.npInterval);
+        this.threadSyncer = threadSyncer;
+        this.evaluatableMembers = evaluatableMembers;
+        bestCopy = new Individual(parameters);
+        bestCopy.Init();
     }
 
-    public void Init(CVRP2 metaCVRPEvaluator)
+    public void Init(IEvaluator metaCVRPEvaluator)
     {
         evaluator = metaCVRPEvaluator;
 
@@ -66,7 +77,6 @@ public class Population
         if(GARandom.inst.Flip(parameters.pCross))
             //XOver.UX(parent1, parent2, child1, child2, parameters.bitChromLength);
             XOver.TwoPoint(parent1, parent2, child1, child2, parameters.bitChromLength);
-
             //XOver.Greedy(parent1, parent2, child1, child2, parameters.bitChromLength, evaluator);
             //XOver.PMX(parent1, parent2, child1, child2, parameters.bitChromLength);
 
@@ -82,14 +92,15 @@ public class Population
         }
     }
 
-    public void CHCWithCataclysms(Population child, int gen) {
+    public void CHCWithCataclysms(Population children, int gen) {
         fitnessTracker.Enqueue(max);
-        if(fitnessTracker.CheckCataclysm() && gen % parameters.localOptInterval != 0) {
-            fitnessTracker.Reset();
+        if(fitnessTracker.CheckCataclysm() && gen % parameters.localOptInterval != 0 && avg/max > 0.99f) {
+        //if(fitnessTracker.CheckCataclysm() && gen % parameters.localOptInterval != 0 ) {
+                fitnessTracker.Reset();
             CataclysmicEvent(0, parameters.populationSize);
             Statistics();
         } 
-        CHCGeneration(child);
+        CHCGeneration(children);
 
     }
 
@@ -113,28 +124,23 @@ public class Population
         Halve(child); // sort and choose best half to make child population
     }
 
-    public void Report(int gen)
-    {
-        GAPlotMgr.inst.AddStats(gen, avg, max);
-        GAPlotMgr.inst.SetBest(bestIndividual);
-        CVRPPlotMgr.inst.SetBest(bestIndividual);
+    public void Report(int gen)    {
 
-
-        string report = gen + ": " + min + ", " + avg + ", " + max;
+        string report = gen + ", " + min + ", " + avg + ", " + max + ", " + bestIndividual.objectiveFunction;
         InputHandler.inst.ThreadLog(report);
 
-        using(StreamWriter w = File.AppendText("outfile")) {
+        gaPlotData = new GAPlotData(gen, min, avg, max, bestIndividual.objectiveFunction, bestIndividual);
+
+        using(StreamWriter w = File.AppendText(parameters.reportFilename)) {
             w.WriteLine(report);
         }
     }
 
-    public void Statistics()
-    {
+    public void Statistics() {
         Statistics(0, parameters.populationSize);
     }
 
-    public void Statistics(int start, int end)
-    {
+    public void Statistics(int start, int end)    {
         float fit; // = members[start].fitness;
         bestIndividual = members[start];
         min = max = sumFitness = members[start].fitness;
@@ -152,8 +158,7 @@ public class Population
         avg = sumFitness/(end - start);
     }
 
-    public int ProportionalSelector() // always on members[0 .. population size]
-    {
+    public int ProportionalSelector(){ // always on members[0 .. population size]
         int index = -1;
         float sum = 0;
         float limit = (float) GARandom.inst.rand.NextDouble() * sumFitness;
@@ -164,35 +169,56 @@ public class Population
         return index;
     }
 
-    public void Evaluate()
-    {
+    public void Evaluate()    {
         Evaluate(0, parameters.populationSize);
     }
 
-    public void Evaluate(int start, int end)
-    {
+    public void Evaluate(int start, int end)    {
+        ParallelEvaluate(start, end);
+        //for(int i = start; i < end; i++) {
+        //    members[i].fitness = evaluator.Evaluate(members[i]);
+        //}
+    }
+
+
+    public void ParallelEvaluate(int start, int end) {
+        evaluatableMembers.Clear();
         for(int i = start; i < end; i++) {
-            members[i].fitness = evaluator.Evaluate(members[i]);
+            evaluatableMembers.Add(members[i]);
         }
+        
+        for(int i = 0; i < threadSyncer.workReady.Length; i++) {
+            threadSyncer.workDone[i].Reset();
+            threadSyncer.workReady[i].Set();
+        }
+
+        WaitHandle.WaitAll(threadSyncer.workDone);
+
+        int index = start;
+        foreach(Individual individual in evaluatableMembers) {
+            members[index++] = individual;
+        }
+
     }
 
 
     public void CataclysmicEvent(int start, int end) {
-        members[start] = bestIndividual;
-        for(int i = start + 1; i < end; i++) {
+        bestCopy.CopyFrom(bestIndividual);
+        //members[start] = bestCopy;
+        for(int i = start; i < end; i++) {
             for(int j = 0; j < parameters.bitChromLength; j++) {
                 if(GARandom.inst.Flip(parameters.pmCat))
-                    members[i].bitChrom[j] = 1 - bestIndividual.bitChrom[j];
+                    members[i].bitChrom[j] = 1 - bestCopy.bitChrom[j];
                 else
-                    members[i].bitChrom[j] = bestIndividual.bitChrom[j];
+                    members[i].bitChrom[j] = bestCopy.bitChrom[j];
             }
         }
+        InputHandler.inst.ThreadLog("Cataclysmic event ");
         Evaluate(start, end);
 
     }
 
     public void LocalOpt(int start, int end) {
-
         //Statistics();
         //evaluator.LocalOpt(bestIndividual);
         for(int i = start; i < end; i++) {
@@ -201,8 +227,7 @@ public class Population
         }
     }
 
-    public void Print()
-    {
+    public void Print()    {
         for(int i = 0; i < parameters.populationSize; i++) {
             InputHandler.inst.ThreadLog(members[i].ToString());
         }

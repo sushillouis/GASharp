@@ -4,38 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 
 using TMPro;
-using System.Threading;
-using System;
-using System.Collections;
-
-
-[Serializable]
-public class GAParameters
-{
-    public int populationSize;
-    public int bitChromLength;
-    public int seqChromLength;
-    public int numberOfGenerations;
-    public float pCross;
-    public float pMut;
-    public float pmCat;
-    public float pLocalOpt;
-    public int seed;
-
-    public CVRP2 evaluator;
-    public CVRPData cvrpData;
-    public CVRPRepresentationType representationType = CVRPRepresentationType.RouteCityHeuristics;
-
-    public int localOptInterval;
-    public int npInterval;
-    
-    // for debugging
-    public bool isDebug;
-    public int nBits, nVars;
-    public float min, max;
-}
-
-
 
 public class InputHandler : MonoBehaviour
 {
@@ -44,42 +12,43 @@ public class InputHandler : MonoBehaviour
     {
         inst = this; 
     }
-    private Thread GAThread;
-
-    public CVRPData cvrpData;
 
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start()    {
         GUIMgr.inst.State = GAState.GAInput;
-        parameters = new GAParameters();
-        cvrpData = new CVRPData();
-        parameters.cvrpData = cvrpData;
-        List<string> problemNameStrings = cvrpData.GetProblemNames();
-
-        FunctionDropdown.ClearOptions();
-        FunctionDropdown.AddOptions(problemNameStrings);
-        LocalOptButton.onClick.AddListener(OnLocalOpt);
+        if(Application.platform == RuntimePlatform.WebGLPlayer) {
+            NRunsPanel.gameObject.SetActive(false);
+        }
 
         Debug.Log("Core count: " + SystemInfo.processorCount);
         Debug.Log("Core count: " + System.Environment.ProcessorCount);
         Debug.Log("Graphics device: " + SystemInfo.graphicsDeviceName);
     }
 
-
-    public void OnFunctionDropdownChanged() {
-        Debug.Log(FunctionDropdown.value);
-        cvrpData.problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
+    public void Init(string problemFilenames) {
+        string[] filenames = problemFilenames.Split(' ');
+        FunctionDropdown.ClearOptions();
+        FunctionDropdown.AddOptions(new List<string>(filenames));
     }
 
-    // Update is called once per frame
+    public string problemFilename = "E-n22-k4.vrp";
+    public string GetProblemFilename() {
+        return problemFilename;
+    }
+    public void OnFunctionDropdownChanged() {
+        Debug.Log(FunctionDropdown.value);
+        problemFilename = FunctionDropdown.options[FunctionDropdown.value].text;
+    }
+
     void Update()
     {
+        /*
         if(GUIMgr.inst.State == GAState.GARunning) {
             GAPlotMgr.inst.Plot();
             GAPlotMgr.inst.PlotBestChrom();
             CVRPPlotMgr.inst.Plot();
         }
+        */
     }
 
     [Header("Input handling")]
@@ -103,22 +72,10 @@ public class InputHandler : MonoBehaviour
     public Toggle DebugToggle;
     public TMP_Dropdown FunctionDropdown;
 
-    public Button SubmitButton;
-    public Button LocalOptButton;
+    public TMP_InputField NRunsInputField;
+    public RectTransform NRunsPanel;
 
-
-    public GAParameters parameters;
-    public void OnSubmit() {
-        GetParamsFromUI();
-        SetupEvaluation();
-        GUIMgr.inst.State = GAState.GARunning;
-        //TestCluster();
-        StartCoroutine(StartJobOnDataLoaded(0.1f));
-
-
-    }
-
-    public void GetParamsFromUI() {
+    public void UpdateParameterFromUI(GAParameters parameters) {
         parameters.populationSize = int.Parse(PopulationSize.text);
         parameters.numberOfGenerations = int.Parse(NumberOfGenerations.text);
 
@@ -133,80 +90,18 @@ public class InputHandler : MonoBehaviour
         parameters.seed = int.Parse(Seed.text);
         parameters.isDebug = DebugToggle.isOn;
 
+        parameters.nRuns = int.Parse(NRunsInputField.text);
+
         Debug.Log("GAParameters: pop: " + parameters.populationSize + ", ngens: " +
-            parameters.numberOfGenerations + ", chromlength: " + parameters.bitChromLength + ", min: " +
-            parameters.min + ", max: " + parameters.max + ", nHeuristicBits: " + parameters.nBits + ", nVars: " +
-            parameters.nVars + ", pCross: " +
-            parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
-    }
-
-    void SetupEvaluation() {
-        cvrpData.LoadData(FunctionDropdown.options[FunctionDropdown.value].text.Trim(), parameters.representationType);
-
-        parameters.evaluator = new CVRP2(cvrpData);
-    }
-
-    IEnumerator StartJobOnDataLoaded(float checkInterval) {
-        while(!cvrpData.isDataLoaded)
-            yield return new WaitForSeconds(checkInterval);
-
-        parameters.bitChromLength = parameters.evaluator.GetChromLength();
-        Debug.Log("bitChromLength: " + parameters.bitChromLength);
-        parameters.seqChromLength = cvrpData.nCustomers;
-        Debug.Log("seqChromLength: " + parameters.seqChromLength);
-
-        CVRPPlotMgr.inst.Init(parameters);
-        GAPlotMgr.inst.Init();
-
-        HandleRunPlatform();
-    }
-    //---------------------------------------------------------------------------------------
-
-    public CoGA coga;
-    void HandleRunPlatform() {
-
-        if(Application.platform == RuntimePlatform.WebGLPlayer) {
-            GACoroutineStarter();//WebGL does not allow threading
-        } else {
-            StartJob();
-        }
-
-    }
-
-    public void GACoroutineStarter() {
-        coga = new CoGA(parameters);
-        ga = coga;
-        coga.RunAsCoroutine(this);
-        Debug.Log("CoGA started!");
-    }
-
-    void StartJob()    {
-        GAThread = new Thread(GAStarter);
-        GAThread.Start();
-    }
-    
-    public GA ga;
-    public void GAStarter()    {
-        ga = new GA(parameters);
-        ga.Run();
-        Debug.Log("GA done: ");
-
-    }
-
-    private void OnDestroy() {
-        if(ga != null) {
-            ga.isRunning = false; //stop threads if running
-            StopAllCoroutines();  //stop coroutines if running on webgl
-            ga.Cleanup();
-        }
-        if(GAThread != null) GAThread.Join();
+            parameters.numberOfGenerations + ", chromlength: " + parameters.bitChromLength + 
+            ", pCross: " + parameters.pCross + ", pMut: " + parameters.pMut + ", seed: " + parameters.seed);
     }
 
     //---------------------------------------------------------------------------------------
 
     public string LogSemaphore = "1";
     public void ThreadLog(string msg)    {
-        if(parameters.isDebug) {
+        if(DebugToggle.isOn) {
             lock(LogSemaphore) {
                 Debug.Log("GAThrd---> " + msg);
 
@@ -214,26 +109,32 @@ public class InputHandler : MonoBehaviour
         }
     }
 
-    public void OnLocalOpt() {
-        ga.LocalOptBest();
-        //TestSlicing();
-    }
-
     //---------------------------------------------------------------------------------------
 
-    public void TestSlicing() {
-        Individual ind = new Individual(parameters);
-        ind.Init();
-        //evaluator.TestSlicing(ind);
-    }
+}
+
+/*
+public void OnSubmit() {
+    Debug.Log("Submit button clicked");
+    UpdateParameterFromUI();
+    SetupEvaluation();
+    GUIMgr.inst.State = GAState.GARunning;
+    //TestCluster();
+    StartCoroutine(StartJobOnDataLoaded(0.1f));
+
+
+}
+
+
 
     public List<Cluster> clusters = new List<Cluster>();
     public void TestCluster() {
-        ClusterK clusterK = new ClusterK(parameters.cvrpData.customers);
+        ClusterK clusterK = new ClusterK(parameters.problem.cvrpData.customers);
         clusterK.Cluster(parameters.cvrpData.nVehicles);
         clusters = clusterK.myClusters;
 
         ClusterPlotMgr.inst.Init(parameters.cvrpData.customers, parameters.cvrpData.nVehicles);
         ClusterPlotMgr.inst.SetClusters(clusterK.myClusters);
     }
-}
+
+*/

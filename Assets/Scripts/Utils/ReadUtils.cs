@@ -12,7 +12,7 @@ public class ReadUtils : MonoBehaviour {
     }
 
     private void Start() {
-        Debug.Log("Ready to read");
+        //Debug.Log("Ready to read");
     }
 
     public string URL;

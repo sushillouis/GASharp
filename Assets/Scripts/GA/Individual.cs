@@ -23,7 +23,10 @@ public class Individual : IComparable<Individual>
     public List<Route> routes = new List<Route>();
     public List<int> unserved = new List<int>();
     public List<int> available = new List<int>();
+    public bool[] swapped;
+
     public float unservedDemand = 0;
+    public float unservedDistance = 0;
     public float sumRouteLengths = 0;
     public float overCapacity = 0;
 
@@ -45,12 +48,14 @@ public class Individual : IComparable<Individual>
             seqChrom[i] = i;
         }
         GAUtils.Shuffle<int>(seqChrom);
-
+        swapped = new bool[parameters.problem.cvrpData.nCustomers];
         routes.Clear();
-        parameters.evaluator.Initialize(this);
+        parameters.problem.evaluator.Initialize(this);
+    }
 
-
-
+    public void ResetSwapped() {
+        for(int i = 0; i < swapped.Length; i++) 
+            swapped[i] = false;
     }
 
     public void BitFlipMutation(float pm) {
@@ -89,6 +94,7 @@ public class Individual : IComparable<Individual>
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
+        /*
         for(int i = 0; i < parameters.bitChromLength; i++) {
             sb.Append(bitChrom[i].ToString("0"));
         }
@@ -97,6 +103,7 @@ public class Individual : IComparable<Individual>
             sb.Append(seqChrom[i].ToString("0") + ", ");
         }
         sb.Append("\n");
+        */
         sb.Append("Obj: " + objectiveFunction.ToString("0.0") + ", Fit: " + fitness.ToString("0.0") + 
             ", length: " + sumRouteLengths.ToString("0.0") + ", unserved: " + unservedDemand.ToString("0.0") +
             ", OverCapacity: " + overCapacity + "\n");
@@ -111,5 +118,32 @@ public class Individual : IComparable<Individual>
     public int CompareTo(Individual other)
     {
         return other.fitness.CompareTo(fitness);//From high fitness to low
+    }
+
+    public void CreateFrom(Individual other) {
+        bitChrom = new int[other.bitChrom.Length];
+        seqChrom = new int[other.seqChrom.Length];
+        routes = CVRPUtils.CreateRoutes(other.parameters.problem.cvrpData);
+        swapped = new bool[other.parameters.problem.cvrpData.nCustomers];
+        CopyFrom(other);
+    }
+
+    public void CopyFrom(Individual other) {
+        for(int i = 0; i < parameters.bitChromLength; i++) {
+            bitChrom[i] = other.bitChrom[i];
+        }
+        for(int i = 0; i < parameters.seqChromLength; i++) {
+            seqChrom[i] = other.seqChrom[i];
+        }
+        fitness = other.fitness;
+        objectiveFunction = other.objectiveFunction;
+        unservedDemand = other.unservedDemand;
+        sumRouteLengths = other.sumRouteLengths;
+        overCapacity = other.overCapacity;
+
+        int index = 0;
+        foreach(Route route in routes) {
+            route.Copy(other.routes[index++]);
+        }
     }
 }

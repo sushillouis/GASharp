@@ -1,17 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GAPlotMgr : MonoBehaviour
-{
-    public static GAPlotMgr inst;
-    private void Awake() {
-        inst = this;
-    }
+[Serializable]
+public class GAPlottersData {
+    public int run;
     public Plotter avgPlotter;
     public Plotter maxPlotter;
 
+    public string chromosomeString = "";
+
+    public GAPlottersData(int run, Plotter avgPlotter, Plotter maxPlotter) {
+        this.run = run;
+        this.avgPlotter = avgPlotter;
+        this.maxPlotter = maxPlotter;
+    }
+
+    public void Activate(bool shouldShow) {
+        avgPlotter.gameObject.SetActive(shouldShow);
+        maxPlotter.gameObject.SetActive(shouldShow);
+    }
+}
+
+
+public class GAPlotMgr : MonoBehaviour{
+
+    public Plotter avgPlotter;
+    public Plotter maxPlotter;
 
     public Text MinZLabel;
     public Text MaxZLabel;
@@ -32,10 +47,14 @@ public class GAPlotMgr : MonoBehaviour
         
     }
 
-    public void Init() {
+
+    int maxGen = 0;
+    public void Init(GAParameters gaParameters) {
         avgPlotter.InitAxes();
         maxPlotter.InitAxes();
+        maxGen = gaParameters.numberOfGenerations;
     }
+
 
     float minLimit = float.MaxValue, maxLimit = float.MinValue;
     public void AddStats(int gen, float avg, float max) {
@@ -45,14 +64,23 @@ public class GAPlotMgr : MonoBehaviour
             minLimit = avg;
         if(max > maxLimit)
             maxLimit = max;
-        avgPlotter.SetCommonLimits(0, gen + 1, minLimit, maxLimit);
-        maxPlotter.SetCommonLimits(0, gen + 1, minLimit, maxLimit);
+        if(minLimit/maxLimit < 0.9f)
+            minLimit = maxLimit * 0.9f;
+
+        avgPlotter.SetCommonLimits(0, maxGen + 1, minLimit, maxLimit);
+        maxPlotter.SetCommonLimits(0, maxGen + 1, minLimit, maxLimit);
+    }
+
+    public void ResetPlotters() {
+        avgPlotter.ResetPlotter();
+        maxPlotter.ResetPlotter();
     }
 
     public void Plot() {
         UpdateLimitLabels();
         avgPlotter.PlotPoints();
         maxPlotter.PlotPoints();
+
     }
 
     public void UpdateLimitLabels() {

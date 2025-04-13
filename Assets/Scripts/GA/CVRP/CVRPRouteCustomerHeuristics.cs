@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
+public class CVRPRouteCustomerHeuristics : IEvaluator {
 
 
     public CVRPData cvrpData;
-    public float cMax = 10000;
+
+    public float cMax = 100000;
     public float overCapacityPenalty = 10;
-    public float distancePenalty = 10;
+    public float distancePenalty = 100;
+    public float unservedDemandPenalty = 10;
 
     public int nHeuristicBits = 4;
     public int nHeuristicRankBits = 1;
@@ -34,6 +36,8 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
         customerPrecision = (cvrpData.nCustomers - 1) / (Mathf.Pow(2, nHeuristicRankBits) - 1);
 
         nBits = nHeuristicBits + nHeuristicRankBits + nRouteHeuristicBits + nRouteRankBits;
+
+
     }
     public void Initialize(Individual ind) {
         CVRPUtils.InitRoutes(ind, cvrpData);
@@ -45,27 +49,53 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
 
     public float Evaluate(Individual ind) {
         Decode(ind);
-        return EvaluateRoutes(ind);
+        float tmp = EvaluateRoutes(ind);
+
+        LK2All(ind);
+        tmp = EvaluateRoutes(ind);
+
+        //if(GARandom.inst.Flip(0.5f)) {
+        OutlierNeighborSwap(ind);
+        tmp = EvaluateRoutes(ind);
+        //        }
+
+
+        return tmp;
+
     }
 
+    public void LK2All(Individual ind) {
+        foreach(Route route in ind.routes) {
+            if(route.tour.Count > 0) {
+                route.LK2();
+            }
+        }
+    }
 
     public float EvaluateRoutes(Individual ind) {
         float sum = 0;
-        float maxTourLength = 0;
 
         foreach(Route route in ind.routes) {
             route.ComputeMetrics();
             sum += route.tourLength;
-            if(route.tourLength > maxTourLength) {
-                maxTourLength = route.tourLength;
-            }
         }
+
+        ind.unservedDistance = UnservedDistance(ind);
         ind.unservedDemand = UnservedDemand(ind);
         ind.overCapacity = OverCapacity(ind);
         ind.sumRouteLengths = sum;
-        ind.objectiveFunction = sum + ind.unservedDemand + (overCapacityPenalty * ind.overCapacity);
+        ind.objectiveFunction = sum + ind.unservedDemand + ind.overCapacity + ind.unservedDistance;
         ind.fitness = cMax - ind.objectiveFunction;
         return ind.fitness;
+    }
+
+    public float RecomputeRouteMetrics(Individual ind) {
+        float sum = 0;
+        foreach(Route route in ind.routes) {
+            route.ComputeMetrics();
+            sum += route.tourLength;
+        }
+        return sum;
     }
 
     public float UnservedDistance(Individual ind) {
@@ -87,7 +117,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
         foreach(int customerIndex in ind.unserved) {
             sum += cvrpData.customers[customerIndex].demand;
         }
-        return sum;
+        return sum * unservedDemandPenalty;
     }
 
     public float OverCapacity(Individual ind) {
@@ -97,7 +127,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
                 sum += route.demand - cvrpData.vehicleCapacity;
             }
         }
-        return sum;
+        return sum * overCapacityPenalty;
     }
 
 
@@ -177,7 +207,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
     void ApplySortingHeuristic(Individual ind, int customerIndex, Route route, float customerDemand) {
 
         if(customerDemand + route.demand <= cvrpData.vehicleCapacity) {
-            AddCustomerIndexToRoute(ind, route, customerIndex);            //ApplyCWHeuristic(ind, customerIndex, route, customerDemand);//          
+            AddCustomerIndexToRoute(ind, route, customerIndex);            //ApplyCWHeuristic(ind, customerIndex, outlierRoute, customerDemand);//          
         } else {
             ApplyCWHeuristic(ind, customerIndex, route, customerDemand);
         }
@@ -280,7 +310,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
         } else {
             route.tour.Insert(routeIndex, customerIndex);
             route.demand += cvrpData.customers[customerIndex].demand;
-            route.tourLength = route.ComputeTourLength();// GetTourLength(route);
+            route.tourLength = route.ComputeTourLength();// GetTourLength(outlierRoute);
             return true;
         }
     }
@@ -294,7 +324,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
             route.tourLength -= cvrpData.depotDistances[tourEndCustomerIndex];
             route.tourLength += cvrpData.depotDistances[customerIndex];
         } else {
-            route.tourLength += 2 * cvrpData.depotDistances[customerIndex]; //single customer route
+            route.tourLength += 2 * cvrpData.depotDistances[customerIndex]; //single customer outlierRoute
         }
         route.demand += cvrpData.customers[customerIndex].demand;
         route.tour.Add(customerIndex);
@@ -380,70 +410,112 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
     }
     //--------------------------------------------------------------------------------
 
-    public void NeighborMerge(Individual ind) {
-        //TODO
-        List<(Route, Route)> neighbors = new List<(Route, Route)>();
-        foreach(Route route in ind.routes) {
-            foreach(Route neighbor in ind.routes) {
-                if(route != neighbor) {
-                    if(IsNeighbor(ind, route, neighbor)) {
-                        neighbors.Add((route, neighbor));
-                    }
-                }
-            }
-        }
-    }
-
-    public bool IsNeighbor(Individual ind, Route baseRoute, Route b) {
-
-
-
-        return false;
-    }
-
-    public List<RouteNeighbors> GetRouteNeighbors(Individual ind) {
-        List<RouteNeighbors> routeNeighbors = new List<RouteNeighbors>();
-        foreach(Route route in ind.routes) {
-            RouteNeighbors rn = new RouteNeighbors();
-            rn.route = route;
-            rn.neighbors = new List<Route>();
-            foreach(Route neighbor in ind.routes) {
-                if(route != neighbor) {
-                    rn.neighbors.Add(neighbor);
-
-                }
-            }
-
-            routeNeighbors.Add(rn);
-        }
-        return routeNeighbors;
-    }
-    public void NeighborSort(Individual ind) {
-
-
-
-
-    }
-
-
-    public Vector3 Centroid(Route route) {
-        Vector3 sum = new Vector3(0, 0, 0);
-        foreach(int cu in route.tour) {
-            sum += (cvrpData.customers[cu].pos - cvrpData.depots[0].pos);
-        }
-        return sum / route.tour.Count;
-    }
-
-    public float CenteroidAngle(Vector3 centroid) {
-        return Mathf.Atan2(centroid.z, centroid.x) * Mathf.Rad2Deg;
-
-    }
 
     //-------------------------------local optimizers-------------------
 
+    /// <summary>
+    /// Finds outlier customers in each outlierRoute and swaps them with the closest customer in another outlierRoute.
+    /// </summary>
+    /// <param name="ind"></param>
+    public void OutlierNeighborSwap(Individual ind) {
+        int outlierRouteIndex = -1;
+        int outlierCustomerIndex = -1;
+        int closestCustomerIndex = -1;
+        int closestCustomerRouteIndex = -1;
+        Route closestRoute = null;
+        float oldFit = ind.fitness;
+        float newFit = 0;
+
+        ind.ResetSwapped();
+
+        foreach(Route outlierRoute in ind.routes) {
+            if(outlierRoute.tour.Count <= 0)
+                continue;
+            (outlierRouteIndex, outlierCustomerIndex) = outlierRoute.FindOutlier(ind.swapped);
+            if(outlierRouteIndex == -1)
+                continue;
+
+            //InputHandler.inst.ThreadLog("Outlier: " + outlierCustomerIndex + ", route: " + outlierRoute.vid + ", index: " + outlierRouteIndex);
+
+            (closestCustomerRouteIndex, closestCustomerIndex, closestRoute) = FindClosestCustomer(ind, outlierRoute, outlierCustomerIndex);
+
+            //InputHandler.inst.ThreadLog("Closest: " + closestCustomerIndex + ", route: " + closestRoute.vid + ", index: " + closestCustomerRouteIndex);
+            //InputHandler.inst.ThreadLog("Distance: " + cvrpData.distances[outlierCustomerIndex, closestCustomerIndex]);
+
+            SwapCustomers(outlierRoute, outlierRouteIndex, outlierCustomerIndex, closestRoute, closestCustomerRouteIndex, closestCustomerIndex);
+
+            newFit = EvaluateRoutes(ind);
+            if(newFit < oldFit) {
+                SwapCustomers(outlierRoute, outlierRouteIndex, closestCustomerIndex, closestRoute, closestCustomerRouteIndex, outlierCustomerIndex);
+            } else {
+                ind.swapped[closestCustomerIndex] = true;
+                ind.swapped[outlierCustomerIndex] = true;
+                //InputHandler.inst.ThreadLog("Swapped: " + outlierCustomerIndex + " with " + closestCustomerIndex + 
+                //    ", deltaFit: " + (newFit-oldFit));
+                oldFit = newFit;
+                break;
+            }
+
+        }
+    }
+
+    public void SwapCustomers(Route outlierRoute, int outlierRouteIndex, int outlierCustomerIndex, 
+        Route closestRoute, int closestRouteIndex, int closestCustomerIndex) {
+        //swap between different routes
+        //InputHandler.inst.ThreadLog(outlierRoute.ToString() + " |Before| " + closestRoute.ToString());
+        outlierRoute.tour.RemoveAt(outlierRouteIndex);
+        closestRoute.tour.RemoveAt(closestRouteIndex);
+
+        outlierRoute.tour.Insert(outlierRouteIndex, closestCustomerIndex);
+        closestRoute.tour.Insert(closestRouteIndex, outlierCustomerIndex);
+        //InputHandler.inst.ThreadLog(outlierRoute.ToString() + " |After | " + closestRoute.ToString());
+
+    }
+
+    public (int, int, Route) FindClosestCustomer(Individual ind, Route route, int outlierCustomerIndex) {
+        float minDistance = float.MaxValue;
+        int closestCustomerIndex = -1;
+        int closestRouteIndex = -1;
+        Route closestRoute = null;
+        foreach(Route otherRoute in ind.routes) {
+            if(otherRoute == route)
+                continue;
+            int index = 0;
+            foreach(int customerIndex in otherRoute.tour) {
+                if(!ind.swapped[customerIndex]) {
+                    float dist = cvrpData.distances[customerIndex, outlierCustomerIndex];
+                    if(dist < minDistance) {
+                        minDistance = dist;
+                        closestCustomerIndex = customerIndex;
+                        closestRouteIndex = index;
+                        closestRoute = otherRoute;
+                    }
+                }
+                index++;
+            }
+        }
+        return (closestRouteIndex, closestCustomerIndex, closestRoute);
+    }
+
+
+    /// <summary>
+    /// Swap outlier ci in outlierRoute i with cj in neighbor outlierRoute j in same positions. ci goes to cj's position, cj goes to ci's position.
+    /// </summary>
+    /// <param name="ind"></param>
+    public void OutlierSavingsSwap(Individual ind) {
+
+
+    }
+
     //------------------------------------------------------------------
     public float LocalOpt(Individual ind) {
-        return BitHillClimber(ind);
+        OutlierNeighborSwap(ind);
+        return EvaluateRoutes(ind);
+
+        //NeighborInsert(ind);
+        //ConvertToBits(ind);
+        //        return Evaluate(ind);
+
     }
 
     public float BitHillClimber(Individual ind) {
@@ -475,7 +547,7 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
         float maxFitness = ind.fitness;
         int maxIndex = 0;
         int index = 0;
-        for(int i = 1; i < ind.bitChrom.Length; i++) {
+        for(int i = 1; i < maxSHCIterations; i++) {
             index = GARandom.inst.RandInt(0, ind.bitChrom.Length);
             ind.bitChrom[index] = 1 - ind.bitChrom[index];
             newFitness = Evaluate(ind);
@@ -533,8 +605,8 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
     public float BSO2Opt(Individual ind) {
         int oi = -1;
         int oj = -1;
-        int ni = -1;
-        int nj = -1;
+        //int ni = -1;
+        //int nj = -1;
         int bestI = 0;
         int bestJ = 1;
         (int, int) bestPair = (0, 0);
@@ -586,3 +658,154 @@ public class CVRPRouteCustomerHeuristics : ICVRPEvaluator {
         return pairs.ToArray();
     }
 }
+
+
+/*
+ * 
+
+
+    public void NeighborMerge(Individual ind) {
+        //TODO
+        List<(Route, Route)> neighbors = new List<(Route, Route)>();
+        foreach(Route outlierRoute in ind.routes) {
+            foreach(Route neighbor in ind.routes) {
+                if(outlierRoute != neighbor) {
+                    if(IsNeighbor(ind, outlierRoute, neighbor)) {
+                        neighbors.Add((outlierRoute, neighbor));
+                    }
+                }
+            }
+        }
+    }
+
+    public bool IsNeighbor(Individual ind, Route baseRoute, Route b) {
+
+
+
+        return false;
+    }
+
+    public List<RouteNeighbors> GetRouteNeighbors(Individual ind) {
+        List<RouteNeighbors> routeNeighbors = new List<RouteNeighbors>();
+        foreach(Route outlierRoute in ind.routes) {
+            RouteNeighbors rn = new RouteNeighbors();
+            rn.outlierRoute = outlierRoute;
+            rn.neighbors = new List<Route>();
+            foreach(Route neighbor in ind.routes) {
+                if(outlierRoute != neighbor) {
+                    rn.neighbors.Add(neighbor);
+
+                }
+            }
+
+            routeNeighbors.Add(rn);
+        }
+        return routeNeighbors;
+    }
+    public void NeighborSort(Individual ind) {
+
+
+
+
+    }
+
+
+    public Vector3 Centroid(Route outlierRoute) {
+        Vector3 sum = new Vector3(0, 0, 0);
+        foreach(int cu in outlierRoute.tour) {
+            sum += (cvrpData.customers[cu].pos - cvrpData.depots[0].pos);
+        }
+        return sum / outlierRoute.tour.Count;
+    }
+
+    public float CenteroidAngle(Vector3 centroid) {
+        return Mathf.Atan2(centroid.z, centroid.x) * Mathf.Rad2Deg;
+
+    }
+
+
+    public void NeighborInsert(Individual ind) {
+        foreach(Route outlierRoute in ind.routes) {
+            outlierRoute.ComputeMetrics();
+        }
+        //------------------------------------
+        foreach(Route outlierRoute in ind.routes) {
+            Route neighbor = FindNeighbor(ind, outlierRoute);
+            InsertMaxSavings(outlierRoute, neighbor);
+        }
+    }
+
+    public Route FindNeighbor(Individual ind, Route outlierRoute) {
+        float minDist = float.MaxValue;
+        Route minRoute = null;
+        foreach(Route other in ind.routes) {
+            if(other == outlierRoute)
+                continue;
+            float dist = Vector3.Distance(outlierRoute.centroid, other.centroid);
+            if(dist < minDist) {
+                minDist = dist;
+                minRoute = other;
+            }
+        }
+        return minRoute;
+    }
+
+    void InsertMaxSavings(Route outlierRoute, Route neighbor) {
+        float maxSavings = 0;
+        int customerIndex = -1;
+        int index = 0;
+        float savings = 0;
+        int insertAtIndex = -1;
+        foreach(int ci in outlierRoute.tour) {
+            (savings, insertAtIndex) = FindMaxSavingsIndex(neighbor, ci);
+            if(savings > maxSavings) {
+                maxSavings = savings;
+                customerIndex = ci;
+            }
+            index++;
+        }
+        if(customerIndex >= 0 && insertAtIndex >= 0) {
+            InsertIntoNeighbor(outlierRoute, neighbor, customerIndex, insertAtIndex);
+        }
+
+    }
+
+    void InsertIntoNeighbor(Route outlierRoute, Route neighbor, int customerIndex, int insertAtIndex) {
+        //Insert customerIndex into neighbor at insertAtIndex
+        outlierRoute.tour.Remove(customerIndex);
+        outlierRoute.ComputeMetrics();
+        neighbor.tour.Insert(insertAtIndex, customerIndex);
+        neighbor.ComputeMetrics();
+    }
+
+    void ConvertToBits(Individual ind) {
+        int[] newChrom = new int[ind.bitChrom.Length];
+        int start = 0;
+        List<Route> newRoutes = CVRPUtils.CreateRoutes(cvrpData);
+
+        foreach(Route outlierRoute in ind.routes) {
+            int nbits = ConvertRouteToBits(ind, outlierRoute, newChrom, start, newRoutes);
+            start += nbits;
+        }
+    }
+
+    int ConvertRouteToBits(Individual ind, Route outlierRoute, int[] newChrom, int start, List<Route> newRoutes) {
+        int[] routeBits;
+        int[] customerHeuristicBits;
+        int routeHeuristic = -1;
+        int routeRank = -1;
+        int customerHeuristic = -1;
+        int customerRank = -1;
+        for(int i = 0; i < ind.bitChrom.Length; i += nBits) {
+            (routeHeuristic, routeRank, customerHeuristic, customerRank) = GetHeuristicsAndRanks(ind, i);
+
+        }
+
+
+        return outlierRoute.tour.Count * nBits;
+
+    }
+
+
+ * 
+ */

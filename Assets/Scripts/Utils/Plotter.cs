@@ -29,14 +29,6 @@ public class Plotter : MonoBehaviour {
 
     void Start() {
         points = new List<Vector3>();
-        LineRenderer[] lineRenderers = GetComponentsInChildren<LineRenderer>();
-        foreach(LineRenderer lr in lineRenderers) {
-            //Debug.Log(lr.name);
-            if(lr.name.Contains("Axes"))
-                axes = lr;
-            else
-                pointsRenderer = lr;
-        }
         InitAxes();
     }
 
@@ -52,6 +44,11 @@ public class Plotter : MonoBehaviour {
         zCoordMin = zCoordMax = point.z;
         xInc = 1;
         zInc = 1;
+    }
+
+    public void ResetPlotter() {
+        points.Clear();
+        pointsRenderer.positionCount = 0;
     }
 
     public void RecomputeLimits(Vector3 point) {
@@ -90,11 +87,8 @@ public class Plotter : MonoBehaviour {
             } else {
                 InitLimits(point);
             } 
-
             points.Add(point);
-
         }
-
     }
 
     public void SetPoints(List<Vector3> inPoints) {
@@ -130,9 +124,7 @@ public class Plotter : MonoBehaviour {
         AddPoint(depot);
     }
 
-
     public void PlotPoints() {
-
         lock(points) {
             if(points.Count > 0) {
                 pointsRenderer.positionCount = (plotType == PlotType.GA ? points.Count : points.Count + 1);
@@ -151,9 +143,7 @@ public class Plotter : MonoBehaviour {
         float z = zMin + ((point.z - zCoordMin) * zInc);
         return new Vector3(x, 0, z) + offset;
     }
-
-
-
+//--------------------------------------------------------------------------------------------------------
 }
 
 
